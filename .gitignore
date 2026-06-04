@@ -1,0 +1,13 @@
+# Git ignore rules
+*.pyc
+__pycache__/
+.env
+.venv
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
