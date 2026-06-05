@@ -1,1 +1,0 @@
-# Migration: Add pallets table

@@ -1,2 +1,21 @@
-# Docker Compose configuration
-version: '3.8'
+# docker-compose.yaml
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pallet-logistics-api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app  # для hot-reload під час розробки
+      - ./frontend:/app/frontend  # для фронтенду
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
