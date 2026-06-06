@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, Text, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -16,7 +16,7 @@ class Transaction(BaseModel, UUIDMixin, TimestampMixin):
     __tablename__ = "transactions"
 
     type = Column(
-        Enum(TransactionType),
+        SQLEnum(TransactionType),
         nullable=False,
     )
 
