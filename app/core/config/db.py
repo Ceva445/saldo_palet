@@ -3,7 +3,7 @@ from pydantic import Field
 from app.core.config.base import BaseConfig
 
 
-class DbBaseConfig(BaseConfig):
+class DbConfig(BaseConfig):
     DATABASE_URL: str = Field(
         ...,
         alias="DATABASE_URL",
