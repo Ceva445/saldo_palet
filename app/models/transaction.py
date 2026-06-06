@@ -4,12 +4,19 @@ from sqlalchemy.orm import relationship
 
 from app.models.base import BaseModel, TimestampMixin, UUIDMixin
 
+from enum import Enum
+
+class TransactionType(str, Enum):
+    RECEIPT = "RECEIPT"
+    ISSUE = "ISSUE"
+    CORRECTION = "CORRECTION"
+
 
 class Transaction(BaseModel, UUIDMixin, TimestampMixin):
     __tablename__ = "transactions"
 
     type = Column(
-        String(20),
+        Enum(TransactionType),
         nullable=False,
     )
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -34,4 +34,8 @@ class Pallet(BaseModel, UUIDMixin, TimestampMixin):
     area = relationship(
         "Area",
         back_populates="pallets",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("supplier_uuid", "area_uuid", name="uq_supplier_area"),
     )
