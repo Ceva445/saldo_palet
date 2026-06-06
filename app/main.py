@@ -6,6 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config.config import settings
 
+from app.routers.area import router as area_router
+from app.routers.pallet import router as pallet_router
+from app.routers.supplier import router as supplier_router
+from app.routers.transaction import router as transaction_router
+from app.routers.unit import router as unit_router
+from app.routers.report import router as report_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,3 +39,11 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+app.include_router(area_router)
+app.include_router(supplier_router)
+app.include_router(unit_router)
+app.include_router(pallet_router)
+app.include_router(transaction_router)
+app.include_router(report_router)
