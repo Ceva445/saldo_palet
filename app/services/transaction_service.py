@@ -31,7 +31,7 @@ class TransactionService:
         if t_type == "RECEIPT":
             pallet.quantity += data["quantity"]
 
-        elif t_type == "RELEASE":
+        elif t_type == "ISSUE":
             if pallet.quantity < data["quantity"]:
                 raise HTTPException(400, "Not enough stock")
 

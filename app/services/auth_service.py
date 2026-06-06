@@ -12,7 +12,7 @@ class AuthService:
         self.repo = UserRepository(session)
 
     async def login(self, username: str, password: str):
-        user = await self.repo.get_one(username=username)
+        user = await self.repo.get_by_username(username)
 
         if not user:
             return None
@@ -25,6 +25,11 @@ class AuthService:
         return {
             "access_token": token,
             "token_type": "bearer",
+            "user": {
+                "uuid": str(user.uuid),
+                "username": user.username,
+                "role": user.role.name,
+            },
         }
 
     async def register(self, username: str, password: str, role_uuid):

@@ -4,8 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config.config import settings
+from app.core.config import settings
+from app.middleware.logging import log_requests
 
+from app.routers.auth import router as auth_router
 from app.routers.area import router as area_router
 from app.routers.pallet import router as pallet_router
 from app.routers.supplier import router as supplier_router
@@ -35,12 +37,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.middleware("http")(log_requests)
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
+app.include_router(auth_router)
 app.include_router(area_router)
 app.include_router(supplier_router)
 app.include_router(unit_router)
