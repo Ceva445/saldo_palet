@@ -29,6 +29,7 @@ class AuthService:
                 "uuid": str(user.uuid),
                 "username": user.username,
                 "role": user.role.name,
+                "is_active": user.is_active,
             },
         }
 

@@ -1,0 +1,63 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- D:\ceva_part_time\saldo_palet\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\ceva_part_time\saldo_palet
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.13.0, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 51 items
+
+tests/test_api.py::TestAuthAPI::test_login_success PASSED                [  1%]
+tests/test_api.py::TestAuthAPI::test_login_invalid_credentials PASSED    [  3%]
+tests/test_api.py::TestAuthAPI::test_health_check PASSED                 [  5%]
+tests/test_api.py::TestAreaAPI::test_create_area PASSED                  [  7%]
+tests/test_api.py::TestAreaAPI::test_get_areas PASSED                    [  9%]
+tests/test_api.py::TestAreaAPI::test_get_area_by_uuid PASSED             [ 11%]
+tests/test_api.py::TestAreaAPI::test_update_area PASSED                  [ 13%]
+tests/test_api.py::TestAreaAPI::test_delete_area PASSED                  [ 15%]
+tests/test_api.py::TestSupplierAPI::test_create_supplier PASSED          [ 17%]
+tests/test_api.py::TestSupplierAPI::test_get_suppliers PASSED            [ 19%]
+tests/test_api.py::TestUnitAPI::test_create_unit PASSED                  [ 21%]
+tests/test_api.py::TestUnitAPI::test_get_units PASSED                    [ 23%]
+tests/test_repositories.py::TestAreaRepository::test_create_area PASSED  [ 25%]
+tests/test_repositories.py::TestAreaRepository::test_get_area_by_name PASSED [ 27%]
+tests/test_repositories.py::TestAreaRepository::test_get_area_not_found PASSED [ 29%]
+tests/test_repositories.py::TestAreaRepository::test_get_all_areas PASSED [ 31%]
+tests/test_repositories.py::TestAreaRepository::test_update_area PASSED  [ 33%]
+tests/test_repositories.py::TestAreaRepository::test_delete_area PASSED  [ 35%]
+tests/test_repositories.py::TestSupplierRepository::test_create_supplier PASSED [ 37%]
+tests/test_repositories.py::TestSupplierRepository::test_get_supplier_by_name PASSED [ 39%]
+tests/test_repositories.py::TestSupplierRepository::test_get_many_suppliers PASSED [ 41%]
+tests/test_repositories.py::TestSupplierRepository::test_pagination PASSED [ 43%]
+tests/test_repositories.py::TestSupplierRepository::test_delete_many PASSED [ 45%]
+tests/test_repositories.py::TestUnitRepository::test_create_unit PASSED  [ 47%]
+tests/test_repositories.py::TestUnitRepository::test_get_by_name PASSED  [ 49%]
+tests/test_repositories.py::TestUnitRepository::test_list_all_by_ids PASSED [ 50%]
+tests/test_repositories.py::TestPalletRepository::test_create_pallet PASSED [ 52%]
+tests/test_repositories.py::TestPalletRepository::test_get_stock PASSED  [ 54%]
+tests/test_repositories.py::TestPalletRepository::test_get_stock_not_found PASSED [ 56%]
+tests/test_repositories.py::TestPalletRepository::test_unique_constraint PASSED [ 58%]
+tests/test_repositories.py::TestTransactionRepository::test_create_transaction PASSED [ 60%]
+tests/test_repositories.py::TestTransactionRepository::test_get_by_period PASSED [ 62%]
+tests/test_services.py::TestAreaService::test_create_and_get_area PASSED [ 64%]
+tests/test_services.py::TestAreaService::test_get_all_areas PASSED       [ 66%]
+tests/test_services.py::TestAreaService::test_update_area PASSED         [ 68%]
+tests/test_services.py::TestAreaService::test_delete_area PASSED         [ 70%]
+tests/test_services.py::TestSupplierService::test_create_supplier PASSED [ 72%]
+tests/test_services.py::TestSupplierService::test_update_supplier PASSED [ 74%]
+tests/test_services.py::TestSupplierService::test_delete_supplier PASSED [ 76%]
+tests/test_services.py::TestUnitService::test_crud_operations PASSED     [ 78%]
+tests/test_services.py::TestAuthService::test_login_success PASSED       [ 80%]
+tests/test_services.py::TestAuthService::test_login_invalid_password PASSED [ 82%]
+tests/test_services.py::TestAuthService::test_login_invalid_username PASSED [ 84%]
+tests/test_services.py::TestAuthService::test_register_user PASSED       [ 86%]
+tests/test_services.py::TestPermissionService::test_admin_has_all_permissions PASSED [ 88%]
+tests/test_services.py::TestPermissionService::test_operator_permissions PASSED [ 90%]
+tests/test_services.py::TestPermissionService::test_viewer_permissions PASSED [ 92%]
+tests/test_services.py::TestTransactionService::test_create_receipt_transaction PASSED [ 94%]
+tests/test_services.py::TestTransactionService::test_issue_insufficient_stock PASSED [ 96%]
+tests/test_services.py::TestTransactionService::test_create_correction_transaction PASSED [ 98%]
+tests/test_services.py::TestTransactionService::test_invalid_transaction_type PASSED [100%]
+
+============================= 51 passed in 1.65s ==============================
