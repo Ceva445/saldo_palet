@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
@@ -158,7 +158,7 @@ class BaseRepository(Generic[ModelType]):
         for key, value in data.items():
             setattr(obj, key, value)
 
-        obj.updated_at = datetime.utcnow()
+        obj.updated_at =  datetime.now(timezone.utc)
 
         await self.session.flush()
         return obj
