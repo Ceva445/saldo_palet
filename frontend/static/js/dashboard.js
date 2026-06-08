@@ -7,11 +7,6 @@ const TX_PREFIXES = ["rc", "rl", "co"];
 // fields and the masterdata management lists.
 const COMBO_LIMIT = 8;
 const FIELD_KINDS = { area: "areas", supplier: "suppliers", unit: "units" };
-const MD = [
-  ["areas", "Obszary"],
-  ["suppliers", "Dostawcy"],
-  ["units", "Jednostki"],
-];
 
 function debounce(fn, ms) {
   let t;
@@ -93,6 +88,12 @@ function setupFieldCombos() {
   }
 }
 
+function setupReportCombos() {
+  for (const field of Object.keys(FIELD_KINDS)) {
+    setupFieldCombo("rp", field);
+  }
+}
+
 function setupFieldCombo(prefix, field) {
   const kind = FIELD_KINDS[field];
   const input = document.getElementById(`${prefix}-${field}-input`);
@@ -114,81 +115,36 @@ function setupFieldCombo(prefix, field) {
   input.addEventListener("blur", () => setTimeout(() => menu.classList.add("hidden"), 150));
 }
 
-// ---------- Masterdata management combos ----------
-function renderMasterdataCombos() {
-  document.getElementById("md-lists").innerHTML = `
-    <div class="md-grid">
-      ${MD.map(
-        ([kind, title]) => `
-        <div class="combo" data-kind="${kind}">
-          <div class="md-panel-head">
-            <strong>${title}</strong>
-            <span class="badge" id="count-${kind}">0</span>
-          </div>
-          <input class="combo-input" id="combo-${kind}" placeholder="Szukaj / wybierz…" autocomplete="off" />
-          <div class="combo-menu hidden" id="menu-${kind}"></div>
-          <div class="combo-selected hidden" id="sel-${kind}"></div>
-        </div>`
-      ).join("")}
-    </div>`;
-
-  MD.forEach(([kind]) => setupMasterdataCombo(kind));
+// ---------- Masterdata (Typ + searchable name + add/delete) ----------
+function mdKind() {
+  return document.getElementById("md-type").value;
 }
 
-function setupMasterdataCombo(kind) {
-  const input = document.getElementById(`combo-${kind}`);
-  const menu = document.getElementById(`menu-${kind}`);
+function clearMdName() {
+  document.getElementById("md-name").value = "";
+  document.getElementById("md-name-input").value = "";
+  document.getElementById("md-name-menu").classList.add("hidden");
+}
+
+function setupMasterdataCombo() {
+  const input = document.getElementById("md-name-input");
+  const hidden = document.getElementById("md-name");
+  const menu = document.getElementById("md-name-menu");
 
   const search = debounce(async () => {
-    const { items, total } = await fetchMd(kind, input.value.trim());
-    document.getElementById(`count-${kind}`).textContent = total;
-    renderOptions(menu, items, (uuid, name) => selectMasterdataItem(kind, uuid, name));
+    hidden.value = "";
+    const { items } = await fetchMd(mdKind(), input.value.trim());
+    renderOptions(menu, items, (uuid, name) => {
+      hidden.value = uuid;
+      input.value = name;
+      menu.classList.add("hidden");
+    });
   }, 200);
 
   input.addEventListener("focus", search);
   input.addEventListener("input", search);
   input.addEventListener("blur", () => setTimeout(() => menu.classList.add("hidden"), 150));
-
-  refreshComboCount(kind);
-}
-
-function selectMasterdataItem(kind, uuid, name) {
-  const editable = can("masterdata");
-  const sel = document.getElementById(`sel-${kind}`);
-
-  sel.innerHTML = `<span>${esc(name)}</span>${
-    editable ? `<button class="danger" data-uuid="${uuid}">Usuń</button>` : ""
-  }`;
-  sel.classList.remove("hidden");
-
-  document.getElementById(`menu-${kind}`).classList.add("hidden");
-  document.getElementById(`combo-${kind}`).value = name;
-
-  const btn = sel.querySelector("button[data-uuid]");
-  if (btn) btn.onclick = () => deleteMasterdata(kind, uuid);
-}
-
-function clearComboSelection(kind) {
-  const sel = document.getElementById(`sel-${kind}`);
-  sel.classList.add("hidden");
-  sel.innerHTML = "";
-  document.getElementById(`combo-${kind}`).value = "";
-}
-
-async function refreshComboCount(kind) {
-  const { total } = await fetchMd(kind, "");
-  document.getElementById(`count-${kind}`).textContent = total;
-}
-
-// ---------- Stock ----------
-async function loadStock() {
-  const rows = await api("/pallets");
-  document.getElementById("stock-body").innerHTML = rows
-    .map(
-      (r) =>
-        `<tr><td>${esc(r.supplier_name)}</td><td>${esc(r.area_name)}</td><td>${esc(r.unit_name)}</td><td>${r.quantity}</td></tr>`
-    )
-    .join("");
+  document.getElementById("md-type").addEventListener("change", clearMdName);
 }
 
 // ---------- Actions ----------
@@ -223,40 +179,116 @@ async function submitTx(prefix, type) {
     msg.textContent = "Zapisano";
     document.getElementById(prefix + "-qty").value = "";
     document.getElementById(prefix + "-comment").value = "";
-    loadStock();
   } catch (e) {
     msg.classList.add("error");
     msg.textContent = e.message;
   }
 }
 
-async function addMasterdata(kind, inputId) {
+async function downloadReport(type, useSupplier, useRange) {
+  const msg = document.getElementById("rp-msg");
+  msg.className = "msg";
+  msg.textContent = "";
+
+  const supplier = document.getElementById("rp-supplier").value;
+  const unit = document.getElementById("rp-unit").value;
+  const area = document.getElementById("rp-area").value;
+  const start = document.getElementById("rp-start").value;
+  const end = document.getElementById("rp-end").value;
+
+  if (useSupplier && !supplier) {
+    msg.classList.add("error");
+    msg.textContent = "Wybierz dostawcę";
+    return;
+  }
+  if (useRange && (!start || !end)) {
+    msg.classList.add("error");
+    msg.textContent = "Podaj zakres dat (Start i Koniec)";
+    return;
+  }
+
+  const params = new URLSearchParams();
+  if (useSupplier && supplier) params.set("supplier_uuid", supplier);
+  if (unit) params.set("unit_uuid", unit);
+  if (area) params.set("area_uuid", area);
+  if (type === "ksiegowania" || useRange) {
+    if (start) params.set("start", start);
+    if (end) params.set("end", end);
+  }
+
+  try {
+    const res = await fetch(`/reports/${type}?${params.toString()}`, {
+      headers: { Authorization: "Bearer " + token() },
+    });
+    if (res.status === 401) return logout();
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data && data.message) || "Błąd generowania raportu");
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : `${type}.xlsx`;
+
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objUrl);
+
+    msg.classList.add("ok");
+    msg.textContent = "Raport pobrany";
+  } catch (e) {
+    msg.classList.add("error");
+    msg.textContent = e.message;
+  }
+}
+
+async function addMasterdata() {
   const msg = document.getElementById("md-msg");
   msg.className = "msg";
   msg.textContent = "";
-  const input = document.getElementById(inputId);
-  const name = input.value.trim();
-  if (!name) return;
+  const name = document.getElementById("md-name-input").value.trim();
+  if (!name) {
+    msg.classList.add("error");
+    msg.textContent = "Podaj nazwę";
+    return;
+  }
   try {
-    await api("/" + kind, { method: "POST", body: { name } });
-    input.value = "";
+    await api("/" + mdKind(), { method: "POST", body: { name } });
+    clearMdName();
     msg.classList.add("ok");
     msg.textContent = "Dodano";
-    refreshComboCount(kind);
   } catch (e) {
     msg.classList.add("error");
     msg.textContent = e.message;
   }
 }
 
-async function deleteMasterdata(kind, uuid) {
+async function deleteMasterdata() {
+  const msg = document.getElementById("md-msg");
+  msg.className = "msg";
+  msg.textContent = "";
+  const uuid = document.getElementById("md-name").value;
+  const name = document.getElementById("md-name-input").value.trim();
+  if (!uuid) {
+    msg.classList.add("error");
+    msg.textContent = "Wybierz istniejącą pozycję z listy";
+    return;
+  }
+  if (!confirm(`Usunąć "${name}"?`)) return;
   try {
-    await api(`/${kind}/${uuid}`, { method: "DELETE" });
-    clearComboSelection(kind);
-    refreshComboCount(kind);
-    loadStock();
+    await api(`/${mdKind()}/${uuid}`, { method: "DELETE" });
+    clearMdName();
+    msg.classList.add("ok");
+    msg.textContent = "Usunięto";
   } catch (e) {
-    document.getElementById("md-msg").textContent = e.message;
+    msg.classList.add("error");
+    msg.textContent = e.message;
   }
 }
 
@@ -265,8 +297,18 @@ function wireEvents() {
   document.querySelectorAll("button[data-tx]").forEach((b) => {
     b.onclick = () => submitTx(b.dataset.prefix, b.dataset.tx);
   });
-  document.querySelectorAll("button[data-md]").forEach((b) => {
-    b.onclick = () => addMasterdata(b.dataset.md, b.dataset.input);
+  document.getElementById("md-add-btn").onclick = addMasterdata;
+  document.getElementById("md-del-btn").onclick = deleteMasterdata;
+  document.querySelectorAll("button[data-report]").forEach((b) => {
+    b.onclick = () =>
+      downloadReport(b.dataset.report, b.dataset.supplier === "1", b.dataset.range === "1");
+  });
+}
+
+function fillTodayDates() {
+  const today = new Date().toLocaleDateString("pl-PL");
+  document.querySelectorAll(".tx-date").forEach((el) => {
+    el.value = today;
   });
 }
 
@@ -283,9 +325,10 @@ async function boot() {
     if (can("users")) {
       document.getElementById("users-link").classList.remove("hidden");
     }
+    fillTodayDates();
     setupFieldCombos();
-    renderMasterdataCombos();
-    await loadStock();
+    setupReportCombos();
+    setupMasterdataCombo();
     wireEvents();
     applyPermissions();
   } catch (e) {

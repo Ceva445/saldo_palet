@@ -1,5 +1,50 @@
+from datetime import date, datetime, time, timedelta
+from uuid import UUID
+
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
+
+from app.models.area import Area
+from app.models.pallet import Pallet
+from app.models.supplier import Supplier
+from app.models.transaction import Transaction, TransactionType
+from app.models.unit import Unit
+from app.models.user import User
+
+OPERATION_LABELS = {
+    TransactionType.RECEIPT.value: "IN",
+    TransactionType.ISSUE.value: "OUT",
+    TransactionType.CORRECTION.value: "KOREKTA",
+}
+
+HISTORY_HEADERS = [
+    "Data_dodania", "Data", "Pracownik", "Dostawca", "Operacja",
+    "Wartosc", "Jednostka", "Obszar", "Komentarz",
+]
+SALDO_HEADERS = [
+    "Dostawca", "Jednostka", "Obszar", "IN", "OUT", "Korekty",
+    "Saldo", "Saldo-2%", "Saldo-1%",
+]
+
+
+def _date_bounds(start: date | None, end: date | None) -> list:
+    conditions = []
+    if start is not None:
+        conditions.append(Transaction.created_at >= datetime.combine(start, time.min))
+    if end is not None:
+        conditions.append(Transaction.created_at < datetime.combine(end + timedelta(days=1), time.min))
+    return conditions
+
+
+def _entity_filters(supplier_uuid, area_uuid, unit_uuid) -> list:
+    conditions = []
+    if supplier_uuid:
+        conditions.append(Transaction.supplier_uuid == supplier_uuid)
+    if area_uuid:
+        conditions.append(Transaction.area_uuid == area_uuid)
+    if unit_uuid:
+        conditions.append(Transaction.unit_uuid == unit_uuid)
+    return conditions
 
 
 class ReportService:
@@ -7,35 +52,105 @@ class ReportService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def stock_report(self):
-        query = text("""
-            SELECT
-                s.name as supplier_name,
-                a.name as area_name,
-                p.quantity
-            FROM pallets p
-            JOIN suppliers s ON s.uuid = p.supplier_uuid
-            JOIN areas a ON a.uuid = p.area_uuid
-        """)
+    async def booking_history(
+        self,
+        supplier_uuid: UUID | None = None,
+        unit_uuid: UUID | None = None,
+        area_uuid: UUID | None = None,
+        start: date | None = None,
+        end: date | None = None,
+    ) -> tuple[str, list[str], list[list]]:
+        t = Transaction
+        query = (
+            select(
+                t.created_at, User.username, Supplier.name, t.type,
+                t.quantity, Unit.name, Area.name, t.comment,
+            )
+            .join(Supplier, t.supplier_uuid == Supplier.uuid)
+            .join(Area, t.area_uuid == Area.uuid)
+            .join(Unit, t.unit_uuid == Unit.uuid)
+            .join(User, t.user_uuid == User.uuid)
+            .where(*_entity_filters(supplier_uuid, area_uuid, unit_uuid), *_date_bounds(start, end))
+            .order_by(t.created_at.desc())
+        )
 
         result = await self.session.execute(query)
-        return result.mappings().all()
 
-    async def transaction_report(self):
-        query = text("""
-            SELECT
-                t.uuid as transaction_uuid,
-                t.type,
-                s.name as supplier_name,
-                a.name as area_name,
-                u.name as unit_name,
-                t.quantity,
-                t.created_at
-            FROM transactions t
-            JOIN suppliers s ON s.uuid = t.supplier_uuid
-            JOIN areas a ON a.uuid = t.area_uuid
-            JOIN units u ON u.uuid = t.unit_uuid
-        """)
+        rows = []
+        for created_at, username, supplier, op_type, qty, unit, area, comment in result.all():
+            rows.append([
+                created_at,
+                created_at.date() if created_at else None,
+                username,
+                supplier,
+                OPERATION_LABELS.get(op_type, op_type),
+                qty,
+                unit,
+                area,
+                comment,
+            ])
+
+        return "Raport", HISTORY_HEADERS, rows
+
+    async def _aggregate_by_uuid(
+        self, supplier_uuid, area_uuid, unit_uuid, start, end
+    ) -> dict:
+        t = Transaction
+        in_sum = func.sum(case((t.type == TransactionType.RECEIPT.value, t.quantity), else_=0))
+        out_sum = func.sum(case((t.type == TransactionType.ISSUE.value, t.quantity), else_=0))
+        kor_sum = func.sum(case((t.type == TransactionType.CORRECTION.value, t.quantity), else_=0))
+
+        query = (
+            select(t.supplier_uuid, t.area_uuid, t.unit_uuid, in_sum, out_sum, kor_sum)
+            .where(*_entity_filters(supplier_uuid, area_uuid, unit_uuid), *_date_bounds(start, end))
+            .group_by(t.supplier_uuid, t.area_uuid, t.unit_uuid)
+        )
+        result = await self.session.execute(query)
+        return {
+            (r[0], r[1], r[2]): (int(r[3] or 0), int(r[4] or 0), int(r[5] or 0))
+            for r in result.all()
+        }
+
+    async def saldo(
+        self,
+        supplier_uuid: UUID | None = None,
+        unit_uuid: UUID | None = None,
+        area_uuid: UUID | None = None,
+        start: date | None = None,
+        end: date | None = None,
+    ) -> tuple[str, list[str], list[list]]:
+        ranged = start is not None and end is not None
+        agg = await self._aggregate_by_uuid(supplier_uuid, area_uuid, unit_uuid, start, end)
+
+        # Pallet rows give names + the authoritative current balance.
+        query = (
+            select(
+                Pallet.supplier_uuid, Pallet.area_uuid, Pallet.unit_uuid, Pallet.quantity,
+                Supplier.name, Unit.name, Area.name,
+            )
+            .join(Supplier, Pallet.supplier_uuid == Supplier.uuid)
+            .join(Unit, Pallet.unit_uuid == Unit.uuid)
+            .join(Area, Pallet.area_uuid == Area.uuid)
+            .order_by(Supplier.name)
+        )
+        if supplier_uuid:
+            query = query.where(Pallet.supplier_uuid == supplier_uuid)
+        if area_uuid:
+            query = query.where(Pallet.area_uuid == area_uuid)
+        if unit_uuid:
+            query = query.where(Pallet.unit_uuid == unit_uuid)
 
         result = await self.session.execute(query)
-        return result.mappings().all()
+
+        rows = []
+        for s_uuid, a_uuid, u_uuid, quantity, supplier, unit, area in result.all():
+            in_, out, kor = agg.get((s_uuid, a_uuid, u_uuid), (0, 0, 0))
+            # Full report: current stock. Range report: net movement in the window.
+            saldo = (in_ - out) if ranged else quantity
+            rows.append([
+                supplier, unit, area, in_, out, kor,
+                saldo, round(saldo * 0.98), round(saldo * 0.99),
+            ])
+
+        sheet = "Saldo_zakres" if ranged else "Saldo"
+        return sheet, SALDO_HEADERS, rows

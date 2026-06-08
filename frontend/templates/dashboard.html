@@ -2,36 +2,30 @@
 
 {% block title %}System ewidencji palet{% endblock %}
 
-{% macro tx_form(prefix, title, module, type) %}
+{% macro combo_field(prefix, field, label) %}
+<div class="field combo">
+    <label>{{ label }}</label>
+    <input class="combo-input" id="{{ prefix }}-{{ field }}-input" autocomplete="off" placeholder="Szukaj…" />
+    <input type="hidden" id="{{ prefix }}-{{ field }}" />
+    <div class="combo-menu hidden" id="{{ prefix }}-{{ field }}-menu"></div>
+</div>
+{% endmacro %}
+
+{% macro tx_form(prefix, title, module, type, button, qty_label="Liczba sztuk", show_date=true) %}
 <section>
     <h2>{{ title }}</h2>
     <fieldset data-module="{{ module }}">
-        <div class="row">
-            <div class="combo">
-                <label>Obszar</label>
-                <input class="combo-input" id="{{ prefix }}-area-input" autocomplete="off" placeholder="Szukaj…" />
-                <input type="hidden" id="{{ prefix }}-area" />
-                <div class="combo-menu hidden" id="{{ prefix }}-area-menu"></div>
-            </div>
-            <div class="combo">
-                <label>Dostawca</label>
-                <input class="combo-input" id="{{ prefix }}-supplier-input" autocomplete="off" placeholder="Szukaj…" />
-                <input type="hidden" id="{{ prefix }}-supplier" />
-                <div class="combo-menu hidden" id="{{ prefix }}-supplier-menu"></div>
-            </div>
+        <div class="fields-row">
+            {% if show_date %}
+            <div class="field"><label>Data</label><input class="tx-date ro" readonly /></div>
+            {% endif %}
+            {{ combo_field(prefix, "area", "Obszar") }}
+            {{ combo_field(prefix, "supplier", "Dostawca") }}
+            {{ combo_field(prefix, "unit", "Jednostka") }}
+            <div class="field"><label>{{ qty_label }}</label><input id="{{ prefix }}-qty" type="number" min="1" /></div>
+            <div class="field"><label>Komentarz</label><input id="{{ prefix }}-comment" /></div>
         </div>
-        <div class="row">
-            <div class="combo">
-                <label>Jednostka</label>
-                <input class="combo-input" id="{{ prefix }}-unit-input" autocomplete="off" placeholder="Szukaj…" />
-                <input type="hidden" id="{{ prefix }}-unit" />
-                <div class="combo-menu hidden" id="{{ prefix }}-unit-menu"></div>
-            </div>
-            <div><label>Liczba sztuk</label><input id="{{ prefix }}-qty" type="number" min="1" /></div>
-        </div>
-        <label>Komentarz</label>
-        <input id="{{ prefix }}-comment" />
-        <button data-tx="{{ type }}" data-prefix="{{ prefix }}">Zapisz</button>
+        <button data-tx="{{ type }}" data-prefix="{{ prefix }}">{{ button }}</button>
         <div class="lock-note">Brak uprawnień do tej sekcji</div>
         <div class="msg" id="{{ prefix }}-msg"></div>
     </fieldset>
@@ -43,50 +37,68 @@
     <strong>System ewidencji palet</strong>
     <span>
         <span class="role" id="user-info"></span>
+        <a href="/stock" class="header-link" style="margin-left:12px">Stan magazynu</a>
         <a href="/admin" id="users-link" class="header-link hidden" style="margin-left:12px">Użytkownicy</a>
         <button class="danger" id="logout-btn" style="margin-left:12px">Wyloguj</button>
     </span>
 </header>
 <main>
-    {{ tx_form("rc", "Przyjęcia (IN)", "receipts", "RECEIPT") }}
-    {{ tx_form("rl", "Wydania (OUT)", "releases", "ISSUE") }}
-    {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION") }}
+    <div class="board">
+        <div class="board-left">
+            {{ tx_form("rc", "Przyjęcia", "receipts", "RECEIPT", "DODAJ PRZYJĘCIE (IN)") }}
+            {{ tx_form("rl", "Wydania", "releases", "ISSUE", "DODAJ WYDANIE (OUT)") }}
+            {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION", "DODAJ KOREKTĘ", "Korekta sztuk", false) }}
+        </div>
 
-    <section>
-        <h2>Masterdata</h2>
-        <fieldset data-module="masterdata">
-            <div class="row">
-                <div>
-                    <label>Obszar</label>
-                    <input id="md-area" placeholder="Nazwa obszaru" />
-                    <button data-md="areas" data-input="md-area">Dodaj obszar</button>
-                </div>
-                <div>
-                    <label>Dostawca</label>
-                    <input id="md-supplier" placeholder="Nazwa dostawcy" />
-                    <button data-md="suppliers" data-input="md-supplier">Dodaj dostawcę</button>
-                </div>
-                <div>
-                    <label>Jednostka</label>
-                    <input id="md-unit" placeholder="np. EUR" />
-                    <button data-md="units" data-input="md-unit">Dodaj jednostkę</button>
-                </div>
-            </div>
-            <div class="lock-note">Brak uprawnień do tej sekcji</div>
-            <div class="msg" id="md-msg"></div>
-        </fieldset>
-        <div id="md-lists"></div>
-    </section>
+        <div class="board-right">
+            <section>
+                <h2>Raporty</h2>
+                <fieldset data-module="reports">
+                    {{ combo_field("rp", "unit", "Jednostka") }}
+                    {{ combo_field("rp", "supplier", "Dostawca") }}
+                    {{ combo_field("rp", "area", "Obszar") }}
+                    <div class="row">
+                        <div><label>Start</label><input id="rp-start" type="date" /></div>
+                        <div><label>Koniec</label><input id="rp-end" type="date" /></div>
+                    </div>
+                    <button data-report="ksiegowania" data-supplier="1">Historia księgowań (dostawca)</button>
+                    <div class="row">
+                        <button data-report="saldo" data-supplier="1">Saldo (dostawca)</button>
+                        <button data-report="saldo" data-supplier="1" data-range="1">Saldo Zakres (dostawca)</button>
+                    </div>
+                    <button data-report="ksiegowania">Historia księgowań (Wszyscy)</button>
+                    <div class="row">
+                        <button data-report="saldo">Saldo (Wszyscy)</button>
+                        <button data-report="saldo" data-range="1">Saldo Zakres (Wszyscy)</button>
+                    </div>
+                    <div class="lock-note">Brak uprawnień do tej sekcji</div>
+                    <div class="msg" id="rp-msg"></div>
+                </fieldset>
+            </section>
 
-    <section class="full">
-        <h2>Stan magazynu</h2>
-        <table>
-            <thead>
-                <tr><th>Dostawca</th><th>Obszar</th><th>Jednostka</th><th>Liczba sztuk</th></tr>
-            </thead>
-            <tbody id="stock-body"></tbody>
-        </table>
-    </section>
+            <section>
+                <h2>Masterdata</h2>
+                <fieldset data-module="masterdata">
+                    <label>Typ</label>
+                    <select id="md-type">
+                        <option value="areas">Obszar</option>
+                        <option value="suppliers">Dostawca</option>
+                        <option value="units">Jednostka</option>
+                    </select>
+                    <div class="combo">
+                        <label>Nazwa</label>
+                        <input class="combo-input" id="md-name-input" autocomplete="off" placeholder="Nazwa / szukaj…" />
+                        <input type="hidden" id="md-name" />
+                        <div class="combo-menu hidden" id="md-name-menu"></div>
+                    </div>
+                    <button id="md-add-btn">Dodaj masterdate</button>
+                    <button id="md-del-btn" class="danger-full">Usuń masterdate</button>
+                    <div class="lock-note">Brak uprawnień do tej sekcji</div>
+                    <div class="msg" id="md-msg"></div>
+                </fieldset>
+            </section>
+        </div>
+    </div>
 </main>
 {% endblock %}
 

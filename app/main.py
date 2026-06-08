@@ -13,6 +13,7 @@ from app.middleware.logging import log_requests
 from app.routers.area import router as area_router
 from app.routers.auth import router as auth_router
 from app.routers.pallet import router as pallet_router
+from app.routers.report import router as report_router
 from app.routers.supplier import router as supplier_router
 from app.routers.transaction import router as transaction_router
 from app.routers.unit import router as unit_router
@@ -62,6 +63,7 @@ app.include_router(supplier_router)
 app.include_router(unit_router)
 app.include_router(pallet_router)
 app.include_router(transaction_router)
+app.include_router(report_router)
 app.include_router(users_router)
 
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
@@ -80,3 +82,8 @@ async def dashboard_page(request: Request):
 @app.get("/admin")
 async def admin_page(request: Request):
     return templates.TemplateResponse(request, "admin.html")
+
+
+@app.get("/stock")
+async def stock_page(request: Request):
+    return templates.TemplateResponse(request, "stock.html")

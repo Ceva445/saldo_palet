@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Stan magazynu — System palet{% endblock %}
+
+{% block body %}
+<header>
+    <strong>Stan magazynu</strong>
+    <span>
+        <a href="/dashboard" class="header-link">← Pulpit</a>
+        <button class="danger" id="logout-btn" style="margin-left:12px">Wyloguj</button>
+    </span>
+</header>
+<main>
+    <section>
+        <h2>Stan magazynu</h2>
+        <input id="stock-filter" placeholder="Szukaj (dostawca / obszar / jednostka)…" autocomplete="off" />
+        <table>
+            <thead>
+                <tr><th>Dostawca</th><th>Obszar</th><th>Jednostka</th><th>Liczba sztuk</th></tr>
+            </thead>
+            <tbody id="stock-body"></tbody>
+        </table>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="/static/js/stock.js"></script>{% endblock %}
