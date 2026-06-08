@@ -20,6 +20,12 @@ class Pallet(BaseModel, UUIDMixin, TimestampMixin):
         nullable=False,
     )
 
+    unit_uuid = Column(
+        UUID(as_uuid=True),
+        ForeignKey("units.uuid"),
+        nullable=False,
+    )
+
     quantity = Column(
         Integer,
         nullable=False,
@@ -36,6 +42,16 @@ class Pallet(BaseModel, UUIDMixin, TimestampMixin):
         back_populates="pallets",
     )
 
+    unit = relationship(
+        "Unit",
+        back_populates="pallets",
+    )
+
     __table_args__ = (
-        UniqueConstraint("supplier_uuid", "area_uuid", name="uq_supplier_area"),
+        UniqueConstraint(
+            "supplier_uuid",
+            "area_uuid",
+            "unit_uuid",
+            name="uq_supplier_area_unit",
+        ),
     )

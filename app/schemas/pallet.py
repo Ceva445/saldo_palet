@@ -8,6 +8,11 @@ class PalletResponse(BaseModel):
 
     supplier_uuid: UUID
     area_uuid: UUID
+    unit_uuid: UUID
+
+    supplier_name: str
+    area_name: str
+    unit_name: str
 
     quantity: int
 

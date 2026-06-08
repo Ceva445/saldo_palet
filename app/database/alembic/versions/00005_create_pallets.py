@@ -23,14 +23,16 @@ def upgrade() -> None:
     op.create_table('pallets',
     sa.Column('supplier_uuid', sa.UUID(), nullable=False),
     sa.Column('area_uuid', sa.UUID(), nullable=False),
+    sa.Column('unit_uuid', sa.UUID(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['area_uuid'], ['areas.uuid'], ),
     sa.ForeignKeyConstraint(['supplier_uuid'], ['suppliers.uuid'], ),
+    sa.ForeignKeyConstraint(['unit_uuid'], ['units.uuid'], ),
     sa.PrimaryKeyConstraint('uuid'),
-    sa.UniqueConstraint('supplier_uuid', 'area_uuid', name='uq_supplier_area')
+    sa.UniqueConstraint('supplier_uuid', 'area_uuid', 'unit_uuid', name='uq_supplier_area_unit')
     )
     op.create_index(op.f('ix_pallets_created_at'), 'pallets', ['created_at'], unique=False)
     op.create_index(op.f('ix_pallets_uuid'), 'pallets', ['uuid'], unique=False)

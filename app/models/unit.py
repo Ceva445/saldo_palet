@@ -12,6 +12,11 @@ class Unit(BaseModel, UUIDMixin, TimestampMixin):
         nullable=False,
         unique=True,)
 
+    pallets = relationship(
+        "Pallet",
+        back_populates="unit",
+    )
+
     transactions = relationship(
         "Transaction",
         back_populates="unit",

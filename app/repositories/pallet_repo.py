@@ -15,10 +15,12 @@ class PalletRepository(BaseRepository[Pallet]):
         self,
         supplier_uuid: UUID,
         area_uuid: UUID,
+        unit_uuid: UUID,
     ) -> Pallet | None:
         return await self.get_one(
             supplier_uuid=supplier_uuid,
             area_uuid=area_uuid,
+            unit_uuid=unit_uuid,
         )
 
     async def get_all_with_relations(self):
@@ -27,7 +29,9 @@ class PalletRepository(BaseRepository[Pallet]):
             .options(
                 joinedload(Pallet.supplier),
                 joinedload(Pallet.area),
+                joinedload(Pallet.unit),
             )
+            .order_by(Pallet.created_at.desc())
         )
 
         result = await self.session.execute(query)
