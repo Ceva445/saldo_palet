@@ -1,1 +1,156 @@
-/* Main styles */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: #eef1f6;
+    color: #1f2937;
+}
+
+/* ---------- Login ---------- */
+.login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    background: #fff;
+    padding: 32px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    width: 320px;
+}
+
+.login-card h1 { font-size: 18px; margin: 0 0 20px; }
+
+/* ---------- Layout ---------- */
+header {
+    background: #1f3a5f;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .role { font-size: 13px; opacity: 0.85; }
+
+main {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+section.full { grid-column: 1 / -1; }
+
+h2 { font-size: 15px; margin: 0 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+
+label { display: block; font-size: 12px; margin: 8px 0 2px; color: #4b5563; }
+
+input, select, textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+button {
+    margin-top: 12px;
+    width: 100%;
+    padding: 9px;
+    border: none;
+    border-radius: 5px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover { background: #1d4ed8; }
+
+button.secondary { background: #64748b; }
+button.danger { background: #dc2626; width: auto; padding: 4px 10px; margin: 0; font-size: 12px; }
+
+/* ---------- Disabled (no permission) ---------- */
+fieldset { border: none; padding: 0; margin: 0; }
+fieldset.locked { opacity: 0.5; }
+.lock-note { font-size: 11px; color: #b91c1c; margin-top: 8px; display: none; }
+fieldset.locked .lock-note { display: block; }
+
+/* ---------- Tables ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef1f6; }
+th { color: #6b7280; font-weight: 600; }
+
+.row { display: flex; gap: 10px; }
+.row > div { flex: 1; }
+
+/* ---------- Masterdata searchable dropdowns ---------- */
+.md-grid { display: flex; gap: 12px; margin-top: 14px; }
+.md-grid > .combo { flex: 1; min-width: 0; }
+
+.md-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.md-panel-head strong { font-size: 13px; }
+
+.badge {
+    background: #e5e7eb;
+    color: #374151;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+}
+
+.combo { position: relative; }
+
+.combo-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 2px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+.combo-option { padding: 6px 9px; font-size: 13px; cursor: pointer; }
+.combo-option:hover { background: #eff6ff; }
+.combo-empty { padding: 6px 9px; font-size: 12px; color: #9ca3af; }
+
+.combo-selected {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 5px 9px;
+    background: #f1f5f9;
+    border-radius: 5px;
+    font-size: 13px;
+}
+.combo-selected span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.msg { font-size: 12px; margin-top: 8px; min-height: 16px; }
+.msg.error { color: #dc2626; }
+.msg.ok { color: #16a34a; }
+.hidden { display: none; }

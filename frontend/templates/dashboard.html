@@ -1,1 +1,92 @@
-<!-- Dashboard template -->
+{% extends "base.html" %}
+
+{% block title %}System ewidencji palet{% endblock %}
+
+{% macro tx_form(prefix, title, module, type) %}
+<section>
+    <h2>{{ title }}</h2>
+    <fieldset data-module="{{ module }}">
+        <div class="row">
+            <div class="combo">
+                <label>Obszar</label>
+                <input class="combo-input" id="{{ prefix }}-area-input" autocomplete="off" placeholder="Szukaj…" />
+                <input type="hidden" id="{{ prefix }}-area" />
+                <div class="combo-menu hidden" id="{{ prefix }}-area-menu"></div>
+            </div>
+            <div class="combo">
+                <label>Dostawca</label>
+                <input class="combo-input" id="{{ prefix }}-supplier-input" autocomplete="off" placeholder="Szukaj…" />
+                <input type="hidden" id="{{ prefix }}-supplier" />
+                <div class="combo-menu hidden" id="{{ prefix }}-supplier-menu"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="combo">
+                <label>Jednostka</label>
+                <input class="combo-input" id="{{ prefix }}-unit-input" autocomplete="off" placeholder="Szukaj…" />
+                <input type="hidden" id="{{ prefix }}-unit" />
+                <div class="combo-menu hidden" id="{{ prefix }}-unit-menu"></div>
+            </div>
+            <div><label>Liczba sztuk</label><input id="{{ prefix }}-qty" type="number" min="1" /></div>
+        </div>
+        <label>Komentarz</label>
+        <input id="{{ prefix }}-comment" />
+        <button data-tx="{{ type }}" data-prefix="{{ prefix }}">Zapisz</button>
+        <div class="lock-note">Brak uprawnień do tej sekcji</div>
+        <div class="msg" id="{{ prefix }}-msg"></div>
+    </fieldset>
+</section>
+{% endmacro %}
+
+{% block body %}
+<header>
+    <strong>System ewidencji palet</strong>
+    <span>
+        <span class="role" id="user-info"></span>
+        <button class="danger" id="logout-btn" style="margin-left:12px">Wyloguj</button>
+    </span>
+</header>
+<main>
+    {{ tx_form("rc", "Przyjęcia (IN)", "receipts", "RECEIPT") }}
+    {{ tx_form("rl", "Wydania (OUT)", "releases", "ISSUE") }}
+    {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION") }}
+
+    <section>
+        <h2>Masterdata</h2>
+        <fieldset data-module="masterdata">
+            <div class="row">
+                <div>
+                    <label>Obszar</label>
+                    <input id="md-area" placeholder="Nazwa obszaru" />
+                    <button data-md="areas" data-input="md-area">Dodaj obszar</button>
+                </div>
+                <div>
+                    <label>Dostawca</label>
+                    <input id="md-supplier" placeholder="Nazwa dostawcy" />
+                    <button data-md="suppliers" data-input="md-supplier">Dodaj dostawcę</button>
+                </div>
+                <div>
+                    <label>Jednostka</label>
+                    <input id="md-unit" placeholder="np. EUR" />
+                    <button data-md="units" data-input="md-unit">Dodaj jednostkę</button>
+                </div>
+            </div>
+            <div class="lock-note">Brak uprawnień do tej sekcji</div>
+            <div class="msg" id="md-msg"></div>
+        </fieldset>
+        <div id="md-lists"></div>
+    </section>
+
+    <section class="full">
+        <h2>Stan magazynu</h2>
+        <table>
+            <thead>
+                <tr><th>Dostawca</th><th>Obszar</th><th>Jednostka</th><th>Liczba sztuk</th></tr>
+            </thead>
+            <tbody id="stock-body"></tbody>
+        </table>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="/static/js/dashboard.js"></script>{% endblock %}

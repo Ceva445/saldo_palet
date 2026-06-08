@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управління палетами</title>
+    <title>{% block title %}System palet{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div id="app"></div>
-    <script src="/static/js/app.js"></script>
+    {% block body %}{% endblock %}
+
+    <script src="/static/js/api.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
