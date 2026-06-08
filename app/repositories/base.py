@@ -115,6 +115,30 @@ class BaseRepository(Generic[ModelType]):
 
         return result.scalars().all(), total.scalar()
 
+    async def search_by_name(
+        self,
+        search: str = "",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[ModelType], int]:
+        """Paginated case-insensitive search on the model's ``name`` column.
+        Returns (page_rows, total_matching). For named entities only."""
+        name_col = self.model.name
+
+        query = select(self.model)
+        total_query = select(func.count()).select_from(self.model)
+
+        if search:
+            condition = name_col.ilike(f"%{search}%")
+            query = query.where(condition)
+            total_query = total_query.where(condition)
+
+        query = query.order_by(name_col).limit(limit).offset(offset)
+
+        rows = (await self.session.execute(query)).scalars().all()
+        total = (await self.session.execute(total_query)).scalar()
+        return rows, total
+
     async def list_all_by_ids(self, uuids: list[UUID]) -> list[ModelType]:
         if not uuids:
             return []
