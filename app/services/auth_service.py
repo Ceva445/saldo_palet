@@ -1,15 +1,26 @@
 # Authentication service
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.user_repo import UserRepository
-from app.core.security import verify_password, hash_password
 from app.core.jwt import create_access_token
+from app.core.security import hash_password, verify_password
+from app.repositories.user_repo import UserRepository
+from app.services.permission_service import PermissionService
 
 
 class AuthService:
 
     def __init__(self, session: AsyncSession):
         self.repo = UserRepository(session)
+        self.permissions = PermissionService()
+
+    def _serialize_user(self, user) -> dict:
+        return {
+            "uuid": str(user.uuid),
+            "username": user.username,
+            "role": user.role.name,
+            "is_active": user.is_active,
+            "permissions": self.permissions.allowed_modules(user.role.name),
+        }
 
     async def login(self, username: str, password: str):
         user = await self.repo.get_by_username(username)
@@ -25,12 +36,7 @@ class AuthService:
         return {
             "access_token": token,
             "token_type": "bearer",
-            "user": {
-                "uuid": str(user.uuid),
-                "username": user.username,
-                "role": user.role.name,
-                "is_active": user.is_active,
-            },
+            "user": self._serialize_user(user),
         }
 
     async def register(self, username: str, password: str, role_uuid):
