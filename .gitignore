@@ -12,3 +12,4 @@ build/
 htmlcov/
 .DS_Store
 test.db
+tests_result.txt
