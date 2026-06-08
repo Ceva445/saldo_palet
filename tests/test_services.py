@@ -313,9 +313,10 @@ class TestTransactionService:
         await pallet_repo.create_one({
             "supplier_uuid": setup_data["supplier_uuid"],
             "area_uuid": setup_data["area_uuid"],
+            "unit_uuid": setup_data["unit_uuid"],
             "quantity": 5
         })
-        
+
         with pytest.raises(Exception) as exc_info:
             await service.create_transaction({
                 "type": "ISSUE",
@@ -336,9 +337,10 @@ class TestTransactionService:
         await pallet_repo.create_one({
             "supplier_uuid": setup_data["supplier_uuid"],
             "area_uuid": setup_data["area_uuid"],
+            "unit_uuid": setup_data["unit_uuid"],
             "quantity": 100
         })
-        
+
         result = await service.create_transaction({
             "type": "CORRECTION",
             "supplier_uuid": setup_data["supplier_uuid"],

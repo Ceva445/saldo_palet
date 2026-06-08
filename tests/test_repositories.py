@@ -200,13 +200,16 @@ class TestPalletRepository:
         """Create test data for pallet tests."""
         supplier_repo = SupplierRepository(session)
         area_repo = AreaRepository(session)
-        
+        unit_repo = UnitRepository(session)
+
         supplier = await supplier_repo.create_one({"name": f"Test Supplier {uuid4().hex[:8]}"})
         area = await area_repo.create_one({"name": f"Test Area {uuid4().hex[:8]}"})
-        
+        unit = await unit_repo.create_one({"name": f"szt_{uuid4().hex[:8]}"})
+
         return {
             "supplier_uuid": supplier.uuid,
             "area_uuid": area.uuid,
+            "unit_uuid": unit.uuid,
         }
 
     @pytest.mark.asyncio
@@ -234,8 +237,9 @@ class TestPalletRepository:
         stock = await repo.get_stock(
             setup_pallet_data["supplier_uuid"],
             setup_pallet_data["area_uuid"],
+            setup_pallet_data["unit_uuid"],
         )
-        
+
         assert stock is not None
         assert stock.quantity == 50
 
@@ -246,8 +250,9 @@ class TestPalletRepository:
         stock = await repo.get_stock(
             setup_pallet_data["supplier_uuid"],
             setup_pallet_data["area_uuid"],
+            setup_pallet_data["unit_uuid"],
         )
-        
+
         assert stock is None
 
     @pytest.mark.asyncio

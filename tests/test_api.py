@@ -186,6 +186,39 @@ class TestSupplierAPI:
         assert len(data) == 2
 
 
+class TestSearchPagination:
+    """Server-side search + pagination for masterdata lists."""
+
+    @pytest.mark.asyncio
+    async def test_search_and_paginate_areas(self, client, session):
+        repo = AreaRepository(session)
+        for i in range(5):
+            await repo.create_one({"name": f"Strefa {i}"})
+        await repo.create_one({"name": "Inne"})
+        await session.commit()
+
+        # First page of the "Strefa" matches.
+        res = await client.get("/areas?search=Strefa&limit=2&offset=0")
+        assert res.status_code == 200
+        assert len(res.json()) == 2
+        assert res.headers["X-Total-Count"] == "5"
+
+        # Offset returns the remainder.
+        res2 = await client.get("/areas?search=Strefa&limit=2&offset=4")
+        assert len(res2.json()) == 1
+
+    @pytest.mark.asyncio
+    async def test_list_without_params_returns_all(self, client, session):
+        repo = AreaRepository(session)
+        await repo.create_one({"name": f"A {uuid4().hex[:6]}"})
+        await repo.create_one({"name": f"B {uuid4().hex[:6]}"})
+        await session.commit()
+
+        res = await client.get("/areas")
+        assert res.status_code == 200
+        assert len(res.json()) == 2
+
+
 class TestUnitAPI:
     """Tests for unit endpoints."""
 
