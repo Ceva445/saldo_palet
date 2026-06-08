@@ -77,11 +77,22 @@ class TestAreaRepository:
         assert updated.name != original_name
 
     @pytest.mark.asyncio
+    async def test_update_sets_naive_datetime(self, session):
+        # updated_at must be naive UTC so asyncpg accepts it for the
+        # TIMESTAMP WITHOUT TIME ZONE column on Postgres.
+        repo = AreaRepository(session)
+        area = await repo.create_one({"name": f"TZ {uuid4().hex[:8]}"})
+
+        updated = await repo.update_one(area.uuid, {"name": f"TZ2 {uuid4().hex[:8]}"})
+
+        assert updated.updated_at.tzinfo is None
+
+    @pytest.mark.asyncio
     async def test_delete_area(self, session):
         repo = AreaRepository(session)
-        
+
         area = await repo.create_one({"name": f"To Delete {uuid4().hex[:8]}"})
-        
+
         deleted = await repo.delete_one(area.uuid)
         
         assert deleted.name == area.name

@@ -25,6 +25,7 @@ class PermissionService:
         "releases",
         "corrections",
         "reports",
+        "users",
     )
 
     def has_access(self, role: str, module: str) -> bool:

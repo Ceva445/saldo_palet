@@ -16,6 +16,7 @@ from app.routers.pallet import router as pallet_router
 from app.routers.supplier import router as supplier_router
 from app.routers.transaction import router as transaction_router
 from app.routers.unit import router as unit_router
+from app.routers.users import router as users_router
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ app.include_router(supplier_router)
 app.include_router(unit_router)
 app.include_router(pallet_router)
 app.include_router(transaction_router)
+app.include_router(users_router)
 
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR / "static"), name="static")
 
@@ -73,3 +75,8 @@ async def login_page(request: Request):
 @app.get("/dashboard")
 async def dashboard_page(request: Request):
     return templates.TemplateResponse(request, "dashboard.html")
+
+
+@app.get("/admin")
+async def admin_page(request: Request):
+    return templates.TemplateResponse(request, "admin.html")

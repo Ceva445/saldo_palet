@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Użytkownicy — System palet{% endblock %}
+
+{% block body %}
+<header>
+    <strong>Zarządzanie użytkownikami</strong>
+    <span>
+        <a href="/dashboard" class="header-link">← Pulpit</a>
+        <button class="danger" id="logout-btn" style="margin-left:12px">Wyloguj</button>
+    </span>
+</header>
+<main>
+    <section>
+        <h2>Dodaj użytkownika</h2>
+        <label>Użytkownik</label>
+        <input id="new-username" autocomplete="off" />
+        <label>Hasło</label>
+        <input id="new-password" type="password" autocomplete="new-password" />
+        <label>Rola</label>
+        <select id="new-role"></select>
+        <button id="create-btn">Dodaj użytkownika</button>
+        <div class="msg" id="user-msg"></div>
+    </section>
+
+    <section id="edit-section" class="hidden">
+        <h2>Edytuj użytkownika</h2>
+        <label>Użytkownik</label>
+        <input id="edit-username" autocomplete="off" />
+        <label>Nowe hasło <small>(zostaw puste, by nie zmieniać)</small></label>
+        <input id="edit-password" type="password" autocomplete="new-password" />
+        <label>Rola</label>
+        <select id="edit-role"></select>
+        <div class="row">
+            <button id="save-edit-btn">Zapisz</button>
+            <button id="cancel-edit-btn" class="secondary">Anuluj</button>
+        </div>
+        <div class="msg" id="edit-msg"></div>
+    </section>
+
+    <section>
+        <h2>Użytkownicy</h2>
+        <table>
+            <thead>
+                <tr><th>Użytkownik</th><th>Rola</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+        </table>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="/static/js/users.js"></script>{% endblock %}

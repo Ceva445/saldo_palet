@@ -23,3 +23,9 @@ class UserRepository(BaseRepository[User]):
                 joinedload(User.role),
             ],
         )
+
+    async def get_all_with_roles(self) -> list[User]:
+        return await self.get_all(
+            order_by=[User.username],
+            options=[joinedload(User.role)],
+        )

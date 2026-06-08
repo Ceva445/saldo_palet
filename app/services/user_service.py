@@ -1,0 +1,107 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from uuid import UUID
+
+from app.core.exc import BadRequestException, ObjectNotFoundException
+from app.core.security import hash_password
+from app.models.role import Role
+from app.repositories.role_repo import RoleRepository
+from app.repositories.user_repo import UserRepository
+
+
+class UserService:
+
+    def __init__(self, session: AsyncSession):
+        self.repo = UserRepository(session)
+        self.role_repo = RoleRepository(session)
+
+    async def list_users(self) -> list[dict]:
+        users = await self.repo.get_all_with_roles()
+        return [
+            {
+                "uuid": u.uuid,
+                "username": u.username,
+                "role": u.role.name,
+                "is_active": u.is_active,
+            }
+            for u in users
+        ]
+
+    async def list_roles(self):
+        return await self.role_repo.get_all(order_by=[Role.name])
+
+    async def create_user(self, username: str, password: str, role_name: str) -> dict:
+        username = username.strip()
+        if not username or not password:
+            raise BadRequestException("Username and password are required")
+
+        role = await self.role_repo.get_by_name(role_name)
+        if role is None:
+            raise BadRequestException(f"Role '{role_name}' not found")
+
+        if await self.repo.get_by_username(username):
+            raise BadRequestException("User already exists")
+
+        user = await self.repo.create_one({
+            "username": username,
+            "hashed_password": hash_password(password),
+            "role_uuid": role.uuid,
+            "is_active": True,
+        })
+
+        return {
+            "uuid": user.uuid,
+            "username": user.username,
+            "role": role.name,
+            "is_active": user.is_active,
+        }
+
+    async def update_user(
+        self,
+        user_uuid: UUID,
+        username: str | None = None,
+        password: str | None = None,
+        role_name: str | None = None,
+    ) -> dict:
+        user = await self.repo.get_with_role(user_uuid)
+        if user is None:
+            raise ObjectNotFoundException("User not found")
+
+        update: dict = {}
+        new_username = user.username
+        role_label = user.role.name
+
+        if username is not None:
+            new_username = username.strip()
+            if not new_username:
+                raise BadRequestException("Username cannot be empty")
+            if new_username != user.username:
+                if await self.repo.get_by_username(new_username):
+                    raise BadRequestException("User already exists")
+                update["username"] = new_username
+
+        if password:
+            update["hashed_password"] = hash_password(password)
+
+        if role_name is not None:
+            role = await self.role_repo.get_by_name(role_name)
+            if role is None:
+                raise BadRequestException(f"Role '{role_name}' not found")
+            update["role_uuid"] = role.uuid
+            role_label = role.name
+
+        if update:
+            await self.repo.update_one(user_uuid, update)
+
+        return {
+            "uuid": user_uuid,
+            "username": new_username,
+            "role": role_label,
+            "is_active": user.is_active,
+        }
+
+    async def delete_user(self, user_uuid: UUID) -> None:
+        user = await self.repo.get_one(uuid=user_uuid)
+        if user is None:
+            raise ObjectNotFoundException("User not found")
+        await self.repo.delete_one(user_uuid)

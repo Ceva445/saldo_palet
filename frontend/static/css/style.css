@@ -36,6 +36,8 @@ header {
 }
 
 header .role { font-size: 13px; opacity: 0.85; }
+.header-link { color: #fff; font-size: 13px; text-decoration: none; }
+.header-link:hover { text-decoration: underline; }
 
 main {
     display: grid;
@@ -83,6 +85,9 @@ button:hover { background: #1d4ed8; }
 
 button.secondary { background: #64748b; }
 button.danger { background: #dc2626; width: auto; padding: 4px 10px; margin: 0; font-size: 12px; }
+button.edit { background: #64748b; width: auto; padding: 4px 10px; margin: 0 6px 0 0; font-size: 12px; }
+
+td.actions { white-space: nowrap; width: 1%; }
 
 /* ---------- Disabled (no permission) ---------- */
 fieldset { border: none; padding: 0; margin: 0; }

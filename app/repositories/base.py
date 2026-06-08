@@ -182,7 +182,9 @@ class BaseRepository(Generic[ModelType]):
         for key, value in data.items():
             setattr(obj, key, value)
 
-        obj.updated_at =  datetime.now(timezone.utc)
+        # Naive UTC to match the TIMESTAMP WITHOUT TIME ZONE columns (asyncpg
+        # rejects tz-aware values for naive columns).
+        obj.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         await self.session.flush()
         return obj

@@ -280,6 +280,9 @@ async function boot() {
     state.user = await api("/auth/me");
     document.getElementById("user-info").textContent =
       `${state.user.username} (${state.user.role})`;
+    if (can("users")) {
+      document.getElementById("users-link").classList.remove("hidden");
+    }
     setupFieldCombos();
     renderMasterdataCombos();
     await loadStock();
