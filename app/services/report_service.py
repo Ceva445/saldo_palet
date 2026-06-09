@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import case, func, select
@@ -28,11 +28,12 @@ SALDO_HEADERS = [
 
 
 def _date_bounds(start: date | None, end: date | None) -> list:
+    # Filter by the user-selected operation date (the report "Data").
     conditions = []
     if start is not None:
-        conditions.append(Transaction.created_at >= datetime.combine(start, time.min))
+        conditions.append(Transaction.operation_date >= start)
     if end is not None:
-        conditions.append(Transaction.created_at < datetime.combine(end + timedelta(days=1), time.min))
+        conditions.append(Transaction.operation_date <= end)
     return conditions
 
 
@@ -63,7 +64,7 @@ class ReportService:
         t = Transaction
         query = (
             select(
-                t.created_at, User.username, Supplier.name, t.type,
+                t.created_at, t.operation_date, User.username, Supplier.name, t.type,
                 t.quantity, Unit.name, Area.name, t.comment,
             )
             .join(Supplier, t.supplier_uuid == Supplier.uuid)
@@ -77,10 +78,10 @@ class ReportService:
         result = await self.session.execute(query)
 
         rows = []
-        for created_at, username, supplier, op_type, qty, unit, area, comment in result.all():
+        for created_at, op_date, username, supplier, op_type, qty, unit, area, comment in result.all():
             rows.append([
-                created_at,
-                created_at.date() if created_at else None,
+                created_at,      # Data_dodania (auto)
+                op_date,         # Data (user-selected)
                 username,
                 supplier,
                 OPERATION_LABELS.get(op_type, op_type),

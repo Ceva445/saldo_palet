@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exc import BadRequestException
@@ -49,7 +51,13 @@ class TransactionService:
             raise BadRequestException("Invalid transaction type")
 
         transaction = await self.transaction_repo.create_one({
-            **data,
+            "type": t_type,
+            "supplier_uuid": data["supplier_uuid"],
+            "area_uuid": data["area_uuid"],
+            "unit_uuid": data["unit_uuid"],
+            "quantity": data["quantity"],
+            "comment": data.get("comment"),
+            "operation_date": data.get("date") or date.today(),
             "user_uuid": user_uuid,
         })
 

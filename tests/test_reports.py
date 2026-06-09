@@ -76,6 +76,37 @@ class TestReportsAPI:
         assert len(rows) == 3
 
     @pytest.mark.asyncio
+    async def test_history_uses_operation_date(self, client, session):
+        from datetime import date
+
+        supplier = await SupplierRepository(session).create_one({"name": f"S {uuid4().hex[:6]}"})
+        area = await AreaRepository(session).create_one({"name": f"A {uuid4().hex[:6]}"})
+        unit = await UnitRepository(session).create_one({"name": f"U {uuid4().hex[:6]}"})
+        role = await RoleRepository(session).create_one({"name": f"r{uuid4().hex[:6]}"})
+        user = await UserRepository(session).create_one(
+            {"username": f"e{uuid4().hex[:6]}", "hashed_password": "x", "role_uuid": role.uuid}
+        )
+
+        await TransactionService(session).create_transaction(
+            {
+                "type": "RECEIPT", "supplier_uuid": supplier.uuid, "area_uuid": area.uuid,
+                "unit_uuid": unit.uuid, "quantity": 5, "comment": None, "date": date(2026, 1, 15),
+            },
+            user.uuid,
+        )
+        await session.commit()
+
+        ws = load_workbook(BytesIO((await client.get("/reports/ksiegowania")).content)).active
+        rows = list(ws.iter_rows(values_only=True))
+        assert rows[0][0] == "Data_dodania" and rows[0][1] == "Data"
+        assert str(rows[1][1])[:10] == "2026-01-15"  # Data = selected operation date
+
+        # Date range filters by operation_date (Jan row excluded from a Feb window).
+        ranged = await client.get("/reports/ksiegowania?start=2026-02-01&end=2026-02-28")
+        ws2 = load_workbook(BytesIO(ranged.content)).active
+        assert len(list(ws2.iter_rows(values_only=True))) == 1  # header only
+
+    @pytest.mark.asyncio
     async def test_reports_require_permission(self, client):
         app.dependency_overrides[get_current_user] = lambda: make_user("nobody")
         res = await client.get("/reports/saldo")

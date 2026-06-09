@@ -11,14 +11,12 @@
 </div>
 {% endmacro %}
 
-{% macro tx_form(prefix, title, module, type, button, qty_label="Liczba sztuk", show_date=true) %}
+{% macro tx_form(prefix, title, module, type, button, qty_label="Liczba sztuk") %}
 <section>
     <h2>{{ title }}</h2>
     <fieldset data-module="{{ module }}">
         <div class="fields-row">
-            {% if show_date %}
-            <div class="field"><label>Data</label><input class="tx-date ro" readonly /></div>
-            {% endif %}
+            <div class="field"><label>Data</label><input type="date" class="tx-date" id="{{ prefix }}-date" /></div>
             {{ combo_field(prefix, "area", "Obszar") }}
             {{ combo_field(prefix, "supplier", "Dostawca") }}
             {{ combo_field(prefix, "unit", "Jednostka") }}
@@ -47,7 +45,7 @@
         <div class="board-left">
             {{ tx_form("rc", "Przyjęcia", "receipts", "RECEIPT", "DODAJ PRZYJĘCIE (IN)") }}
             {{ tx_form("rl", "Wydania", "releases", "ISSUE", "DODAJ WYDANIE (OUT)") }}
-            {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION", "DODAJ KOREKTĘ", "Korekta sztuk", false) }}
+            {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION", "DODAJ KOREKTĘ", "Korekta sztuk") }}
         </div>
 
         <div class="board-right">

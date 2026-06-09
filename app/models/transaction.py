@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Text, Enum as SQLEnum
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, Text, Enum as SQLEnum, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -47,6 +47,13 @@ class Transaction(BaseModel, UUIDMixin, TimestampMixin):
     quantity = Column(
         Integer,
         nullable=False,
+    )
+
+    # User-selected operation date (created_at remains the auto "Data_dodania").
+    operation_date = Column(
+        Date,
+        nullable=False,
+        server_default=text("CURRENT_DATE"),
     )
 
     comment = Column(Text)

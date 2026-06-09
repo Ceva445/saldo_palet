@@ -1,3 +1,4 @@
+from datetime import date as DateType
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,6 +13,8 @@ class TransactionCreate(BaseModel):
 
     quantity: int
     comment: str | None = None
+    # User-selected operation date; defaults to today on the server if omitted.
+    date: DateType | None = None
 
 
 class TransactionResponse(BaseModel):

@@ -173,6 +173,7 @@ async function submitTx(prefix, type) {
         unit_uuid: unit,
         quantity: parseInt(document.getElementById(prefix + "-qty").value, 10),
         comment: document.getElementById(prefix + "-comment").value || null,
+        date: document.getElementById(prefix + "-date").value || null,
       },
     });
     msg.classList.add("ok");
@@ -305,8 +306,13 @@ function wireEvents() {
   });
 }
 
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function fillTodayDates() {
-  const today = new Date().toLocaleDateString("pl-PL");
+  const today = todayISO();
   document.querySelectorAll(".tx-date").forEach((el) => {
     el.value = today;
   });
