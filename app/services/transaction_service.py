@@ -6,6 +6,7 @@ from app.core.exc import BadRequestException
 from app.models.transaction import TransactionType
 from app.repositories.pallet_repo import PalletRepository
 from app.repositories.transaction_repo import TransactionRepository
+from app.schemas.common import ActionResult
 from app.services.audit_service import AuditService
 
 
@@ -17,7 +18,7 @@ class TransactionService:
         self.pallet_repo = PalletRepository(session)
         self.audit = AuditService(session)
 
-    async def create_transaction(self, data: dict, user_uuid):
+    async def create_transaction(self, data: dict, user_uuid) -> ActionResult:
         # Stock is tracked per (supplier, area, unit) — the unit must be part of the key.
         pallet = await self.pallet_repo.get_stock(
             supplier_uuid=data["supplier_uuid"],
@@ -71,4 +72,4 @@ class TransactionService:
 
         await self.session.flush()
 
-        return {"status": "ok"}
+        return ActionResult()

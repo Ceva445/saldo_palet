@@ -172,10 +172,10 @@ class TestAuthService:
         service = AuthService(session)
         
         result = await service.login("testuser", "testpassword")
-        
+
         assert result is not None
-        assert "access_token" in result
-        assert result["user"]["username"] == "testuser"
+        assert result.access_token
+        assert result.user.username == "testuser"
 
     @pytest.mark.asyncio
     async def test_login_invalid_password(self, session, setup_user):
@@ -190,29 +190,8 @@ class TestAuthService:
         service = AuthService(session)
         
         result = await service.login("nonexistent", "testpassword")
-        
-        assert result is None
 
-    @pytest.mark.asyncio
-    async def test_register_user(self, session):
-        import uuid as uuid_module
-        
-        service = AuthService(session)
-        
-        role_uuid_str = str(uuid4())
-        await session.execute(
-            text("INSERT INTO roles (uuid, name) VALUES (:uuid, :name)"),
-            {"uuid": role_uuid_str, "name": "operator"}
-        )
-        await session.commit()
-        
-        # Конвертуємо рядок назад в UUID
-        role_uuid = uuid_module.UUID(role_uuid_str)
-        
-        user = await service.register("newuser", "password123", role_uuid)
-        
-        assert user.username == "newuser"
-        assert user.hashed_password != "password123"
+        assert result is None
 
 
 class TestPermissionService:
@@ -303,7 +282,7 @@ class TestTransactionService:
             "comment": "Test receipt"
         }, setup_data["user_uuid"])
         
-        assert result == {"status": "ok"}
+        assert result.status == "ok"
 
     @pytest.mark.asyncio
     async def test_issue_insufficient_stock(self, session, setup_data):
@@ -350,7 +329,7 @@ class TestTransactionService:
             "comment": "Correction"
         }, setup_data["user_uuid"])
         
-        assert result == {"status": "ok"}
+        assert result.status == "ok"
 
     @pytest.mark.asyncio
     async def test_invalid_transaction_type(self, session, setup_data):

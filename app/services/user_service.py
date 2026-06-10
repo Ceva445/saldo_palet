@@ -1,5 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from uuid import UUID
 
 from app.core.exc import BadRequestException, ObjectNotFoundException
@@ -7,30 +5,27 @@ from app.core.security import hash_password
 from app.models.role import Role
 from app.repositories.role_repo import RoleRepository
 from app.repositories.user_repo import UserRepository
+from app.schemas.user import RoleOut, UserOut
 
 
 class UserService:
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session):
         self.repo = UserRepository(session)
         self.role_repo = RoleRepository(session)
 
-    async def list_users(self) -> list[dict]:
+    async def list_users(self) -> list[UserOut]:
         users = await self.repo.get_all_with_roles()
         return [
-            {
-                "uuid": u.uuid,
-                "username": u.username,
-                "role": u.role.name,
-                "is_active": u.is_active,
-            }
+            UserOut(uuid=u.uuid, username=u.username, role=u.role.name, is_active=u.is_active)
             for u in users
         ]
 
-    async def list_roles(self):
-        return await self.role_repo.get_all(order_by=[Role.name])
+    async def list_roles(self) -> list[RoleOut]:
+        roles = await self.role_repo.get_all(order_by=[Role.name])
+        return [RoleOut.model_validate(r) for r in roles]
 
-    async def create_user(self, username: str, password: str, role_name: str) -> dict:
+    async def create_user(self, username: str, password: str, role_name: str) -> UserOut:
         username = username.strip()
         if not username or not password:
             raise BadRequestException("Username and password are required")
@@ -49,12 +44,7 @@ class UserService:
             "is_active": True,
         })
 
-        return {
-            "uuid": user.uuid,
-            "username": user.username,
-            "role": role.name,
-            "is_active": user.is_active,
-        }
+        return UserOut(uuid=user.uuid, username=user.username, role=role.name, is_active=user.is_active)
 
     async def update_user(
         self,
@@ -62,7 +52,7 @@ class UserService:
         username: str | None = None,
         password: str | None = None,
         role_name: str | None = None,
-    ) -> dict:
+    ) -> UserOut:
         user = await self.repo.get_with_role(user_uuid)
         if user is None:
             raise ObjectNotFoundException("User not found")
@@ -93,12 +83,7 @@ class UserService:
         if update:
             await self.repo.update_one(user_uuid, update)
 
-        return {
-            "uuid": user_uuid,
-            "username": new_username,
-            "role": role_label,
-            "is_active": user.is_active,
-        }
+        return UserOut(uuid=user_uuid, username=new_username, role=role_label, is_active=user.is_active)
 
     async def delete_user(self, user_uuid: UUID) -> None:
         user = await self.repo.get_one(uuid=user_uuid)

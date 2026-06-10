@@ -2,8 +2,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.jwt import create_access_token
-from app.core.security import hash_password, verify_password
+from app.core.security import verify_password
 from app.repositories.user_repo import UserRepository
+from app.schemas.auth import LoginResponse, UserResponse
 from app.services.permission_service import PermissionService
 
 
@@ -13,37 +14,20 @@ class AuthService:
         self.repo = UserRepository(session)
         self.permissions = PermissionService()
 
-    def _serialize_user(self, user) -> dict:
-        return {
-            "uuid": str(user.uuid),
-            "username": user.username,
-            "role": user.role.name,
-            "is_active": user.is_active,
-            "permissions": self.permissions.allowed_modules(user.role.name),
-        }
+    def _user_response(self, user) -> UserResponse:
+        return UserResponse(
+            uuid=user.uuid,
+            username=user.username,
+            role=user.role.name,
+            is_active=user.is_active,
+            permissions=self.permissions.allowed_modules(user.role.name),
+        )
 
-    async def login(self, username: str, password: str):
+    async def login(self, username: str, password: str) -> LoginResponse | None:
         user = await self.repo.get_by_username(username)
 
-        if not user:
-            return None
-
-        if not verify_password(password, user.hashed_password):
+        if not user or not verify_password(password, user.hashed_password):
             return None
 
         token = create_access_token({"sub": str(user.uuid)})
-
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": self._serialize_user(user),
-        }
-
-    async def register(self, username: str, password: str, role_uuid):
-        user = await self.repo.create_one({
-            "username": username,
-            "hashed_password": hash_password(password),
-            "role_uuid": role_uuid,
-        })
-
-        return user
+        return LoginResponse(access_token=token, user=self._user_response(user))
