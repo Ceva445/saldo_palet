@@ -212,7 +212,8 @@ class TestPermissionService:
         assert service.has_access("operator", "receipts") is True
         assert service.has_access("operator", "releases") is True
         assert service.has_access("operator", "reports") is True
-        assert service.has_access("operator", "masterdata") is False
+        assert service.has_access("operator", "masterdata") is True
+        assert service.has_access("operator", "users") is False
 
     def test_viewer_permissions(self):
         service = PermissionService()

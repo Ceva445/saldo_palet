@@ -7,7 +7,9 @@ class PermissionService:
 
     ROLE_PERMISSIONS = {
         "admin": {"*"},
+        # Operator can do everything except managing users.
         "operator": {
+            "masterdata",
             "receipts",
             "releases",
             "corrections",

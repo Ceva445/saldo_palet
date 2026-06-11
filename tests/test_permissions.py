@@ -37,8 +37,14 @@ class TestApiPermissions:
     """API-level enforcement: role decides which modules are writable."""
 
     @pytest.mark.asyncio
-    async def test_operator_cannot_write_masterdata(self, client):
+    async def test_operator_can_write_masterdata(self, client):
         as_role("operator")
+        res = await client.post("/areas", json={"name": f"Op {uuid4().hex[:6]}"})
+        assert res.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_viewer_cannot_write_masterdata(self, client):
+        as_role("viewer")
         res = await client.post("/areas", json={"name": "Blocked"})
         assert res.status_code == 403
 
