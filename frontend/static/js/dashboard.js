@@ -217,6 +217,10 @@ async function downloadReport(type, useSupplier, useRange) {
     if (end) params.set("end", end);
   }
 
+  const buttons = document.querySelectorAll("button[data-report]");
+  buttons.forEach((b) => (b.disabled = true));
+  msg.innerHTML = '<span class="spinner"></span> Generowanie raportu… (może potrwać do minuty)';
+
   try {
     const res = await fetch(`/reports/${type}?${params.toString()}`, {
       headers: { Authorization: "Bearer " + token() },
@@ -246,6 +250,8 @@ async function downloadReport(type, useSupplier, useRange) {
   } catch (e) {
     msg.classList.add("error");
     msg.textContent = e.message;
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
   }
 }
 
