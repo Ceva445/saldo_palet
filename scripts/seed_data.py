@@ -1,12 +1,16 @@
 """Seed roles and an initial admin user.
 
 Usage:
-    python -m scripts.seed_data
+    ADMIN_PASSWORD=... python -m scripts.seed_data   # use a chosen password
+    python -m scripts.seed_data                       # password is generated and printed once
 
+The admin password is never hardcoded: it comes from the ADMIN_PASSWORD env var,
+otherwise a cryptographically strong one is generated and shown a single time.
 Idempotent: re-running will not create duplicates.
 """
 import asyncio
 import os
+import secrets
 
 from sqlalchemy import select
 
@@ -22,7 +26,8 @@ ROLES = [
 ]
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+# No hardcoded default: taken from the environment, otherwise generated once.
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
 async def seed() -> None:
@@ -48,15 +53,21 @@ async def seed() -> None:
         ).scalar_one_or_none()
 
         if admin is None:
+            password = ADMIN_PASSWORD or secrets.token_urlsafe(12)
             session.add(
                 User(
                     username=ADMIN_USERNAME,
-                    hashed_password=hash_password(ADMIN_PASSWORD),
+                    hashed_password=hash_password(password),
                     role_uuid=roles["admin"].uuid,
                     is_active=True,
                 )
             )
-            print(f"Created admin user '{ADMIN_USERNAME}'.")
+            if ADMIN_PASSWORD:
+                print(f"Created admin user '{ADMIN_USERNAME}'.")
+            else:
+                print(f"Created admin user '{ADMIN_USERNAME}' with a generated password:")
+                print(f"    {password}")
+                print("Save it now — it will NOT be shown again. Change it after first login.")
         else:
             print(f"Admin user '{ADMIN_USERNAME}' already exists.")
 
