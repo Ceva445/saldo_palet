@@ -68,7 +68,8 @@ async def run_import(session, rows, force: bool = False, progress=None) -> dict:
             continue
 
         op = OP_MAP[r.operacja]
-        qty = quantity_of(r)
+        # IN/OUT are positive counts; a correction is a signed delta.
+        qty = int(r.wartosc) if op == "CORRECTION" else quantity_of(r)
 
         tx_dicts.append({
             "uuid": uuid4(),
@@ -90,8 +91,8 @@ async def run_import(session, rows, force: bool = False, progress=None) -> dict:
             current += qty
         elif op == "ISSUE":
             current -= qty
-        else:  # CORRECTION sets the absolute value
-            current = qty
+        else:  # CORRECTION is a signed delta
+            current += qty
         balances[key] = current
 
     # Bulk insert transactions (Core executemany, batched).

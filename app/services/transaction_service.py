@@ -46,7 +46,8 @@ class TransactionService:
             pallet.quantity -= data["quantity"]
 
         elif t_type == TransactionType.CORRECTION:
-            pallet.quantity = data["quantity"]
+            # Delta adjustment (may be negative), not an absolute value.
+            pallet.quantity += data["quantity"]
 
         else:
             raise BadRequestException("Invalid transaction type")

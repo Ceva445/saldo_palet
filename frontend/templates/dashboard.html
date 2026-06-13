@@ -11,7 +11,7 @@
 </div>
 {% endmacro %}
 
-{% macro tx_form(prefix, title, module, type, button, qty_label="Liczba sztuk") %}
+{% macro tx_form(prefix, title, module, type, button, qty_label="Liczba sztuk", qty_min="1") %}
 <section>
     <h2>{{ title }}</h2>
     <fieldset data-module="{{ module }}">
@@ -20,7 +20,7 @@
             {{ combo_field(prefix, "area", "Obszar") }}
             {{ combo_field(prefix, "supplier", "Dostawca") }}
             {{ combo_field(prefix, "unit", "Jednostka") }}
-            <div class="field"><label>{{ qty_label }}</label><input id="{{ prefix }}-qty" type="number" min="1" /></div>
+            <div class="field"><label>{{ qty_label }}</label><input id="{{ prefix }}-qty" type="number" {% if qty_min %}min="{{ qty_min }}"{% endif %} /></div>
             <div class="field"><label>Komentarz</label><input id="{{ prefix }}-comment" /></div>
         </div>
         <button data-tx="{{ type }}" data-prefix="{{ prefix }}">{{ button }}</button>
@@ -45,7 +45,7 @@
         <div class="board-left">
             {{ tx_form("rc", "Przyjęcia", "receipts", "RECEIPT", "DODAJ PRZYJĘCIE (IN)") }}
             {{ tx_form("rl", "Wydania", "releases", "ISSUE", "DODAJ WYDANIE (OUT)") }}
-            {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION", "DODAJ KOREKTĘ", "Korekta sztuk") }}
+            {{ tx_form("co", "Korekta stanu", "corrections", "CORRECTION", "DODAJ KOREKTĘ", "Korekta sztuk (+/−)", qty_min="") }}
         </div>
 
         <div class="board-right">

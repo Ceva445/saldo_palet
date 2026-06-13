@@ -65,6 +65,21 @@ class TestImportTransactions:
         assert pallet.quantity == 7  # +10 IN, -3 OUT
 
     @pytest.mark.asyncio
+    async def test_correction_is_signed_delta(self, session):
+        rows = [
+            make_row(2, "IN", -10, when=datetime(2025, 10, 22, 7, 0)),
+            make_row(3, "KOREKTA", -4, when=datetime(2025, 10, 22, 8, 0)),  # delta -4
+        ]
+        await run_validate(session, rows)
+        await run_import(session, rows)
+
+        supplier = (await session.execute(select(Supplier))).scalar_one()
+        unit = (await session.execute(select(Unit))).scalar_one()
+        area = (await session.execute(select(Area).where(Area.name == "Stock"))).scalar_one()
+        pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
+        assert pallet.quantity == 6  # +10 IN, -4 correction
+
+    @pytest.mark.asyncio
     async def test_refuses_second_run_without_force(self, session):
         rows = [make_row(2, "IN", -1)]
         await run_validate(session, rows)

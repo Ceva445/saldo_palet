@@ -329,8 +329,43 @@ class TestTransactionService:
             "quantity": 42,
             "comment": "Correction"
         }, setup_data["user_uuid"])
-        
+
         assert result.status == "ok"
+
+        # Correction is a delta: 100 + 42 = 142.
+        pallet = await pallet_repo.get_stock(
+            setup_data["supplier_uuid"],
+            setup_data["area_uuid"],
+            setup_data["unit_uuid"],
+        )
+        assert pallet.quantity == 142
+
+    @pytest.mark.asyncio
+    async def test_negative_correction(self, session, setup_data):
+        service = TransactionService(session)
+        pallet_repo = PalletRepository(session)
+        await pallet_repo.create_one({
+            "supplier_uuid": setup_data["supplier_uuid"],
+            "area_uuid": setup_data["area_uuid"],
+            "unit_uuid": setup_data["unit_uuid"],
+            "quantity": 100,
+        })
+
+        await service.create_transaction({
+            "type": "CORRECTION",
+            "supplier_uuid": setup_data["supplier_uuid"],
+            "area_uuid": setup_data["area_uuid"],
+            "unit_uuid": setup_data["unit_uuid"],
+            "quantity": -30,
+            "comment": None,
+        }, setup_data["user_uuid"])
+
+        pallet = await pallet_repo.get_stock(
+            setup_data["supplier_uuid"],
+            setup_data["area_uuid"],
+            setup_data["unit_uuid"],
+        )
+        assert pallet.quantity == 70
 
     @pytest.mark.asyncio
     async def test_invalid_transaction_type(self, session, setup_data):
