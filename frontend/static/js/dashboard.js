@@ -177,12 +177,21 @@ async function submitTx(prefix, type) {
       },
     });
     msg.classList.add("ok");
-    msg.textContent = "Zapisano";
-    document.getElementById(prefix + "-qty").value = "";
-    document.getElementById(prefix + "-comment").value = "";
+    msg.textContent = "✓ Zapisano";
+    resetTxForm(prefix);
   } catch (e) {
     msg.classList.add("error");
     msg.textContent = e.message;
+  }
+}
+
+function resetTxForm(prefix) {
+  // Clear quantity, comment and the three search comboboxes (keep the date).
+  document.getElementById(prefix + "-qty").value = "";
+  document.getElementById(prefix + "-comment").value = "";
+  for (const field of Object.keys(FIELD_KINDS)) {
+    document.getElementById(`${prefix}-${field}`).value = "";        // hidden uuid
+    document.getElementById(`${prefix}-${field}-input`).value = "";  // visible text
   }
 }
 

@@ -186,5 +186,19 @@ th { color: #6b7280; font-weight: 600; }
     animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.msg.ok { color: #16a34a; }
+.msg.ok {
+    display: inline-block;
+    color: #fff;
+    background: #16a34a;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
+    animation: pop 0.25s ease;
+}
+@keyframes pop {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
 .hidden { display: none; }
