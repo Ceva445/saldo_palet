@@ -153,13 +153,31 @@ async function submitTx(prefix, type) {
   msg.className = "msg";
   msg.textContent = "";
 
+  const date = document.getElementById(prefix + "-date").value;
   const area = document.getElementById(prefix + "-area").value;
   const supplier = document.getElementById(prefix + "-supplier").value;
   const unit = document.getElementById(prefix + "-unit").value;
+  const qtyRaw = document.getElementById(prefix + "-qty").value;
+  const comment = document.getElementById(prefix + "-comment").value.trim();
+  const quantity = parseInt(qtyRaw, 10);
 
-  if (!area || !supplier || !unit) {
+  const missing = [];
+  if (!date) missing.push("Data");
+  if (!area) missing.push("Obszar");
+  if (!supplier) missing.push("Dostawca");
+  if (!unit) missing.push("Jednostka");
+  if (qtyRaw === "" || Number.isNaN(quantity)) missing.push("Liczba sztuk");
+  if (type === "CORRECTION" && !comment) missing.push("Komentarz");
+
+  if (missing.length) {
     msg.classList.add("error");
-    msg.textContent = "Wybierz obszar, dostawcę i jednostkę";
+    msg.textContent = "Uzupełnij pola: " + missing.join(", ");
+    return;
+  }
+
+  if (type !== "CORRECTION" && quantity <= 0) {
+    msg.classList.add("error");
+    msg.textContent = "Liczba sztuk musi być większa od 0";
     return;
   }
 
@@ -171,9 +189,9 @@ async function submitTx(prefix, type) {
         area_uuid: area,
         supplier_uuid: supplier,
         unit_uuid: unit,
-        quantity: parseInt(document.getElementById(prefix + "-qty").value, 10),
-        comment: document.getElementById(prefix + "-comment").value || null,
-        date: document.getElementById(prefix + "-date").value || null,
+        quantity,
+        comment: comment || null,
+        date,
       },
     });
     msg.classList.add("ok");
