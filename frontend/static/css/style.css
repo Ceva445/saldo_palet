@@ -56,6 +56,8 @@ main {
 /* Horizontal field row inside a transaction form. */
 .fields-row { display: flex; gap: 10px; align-items: flex-start; }
 .fields-row .field { flex: 1; min-width: 0; }
+/* The date input needs enough room to show the full date. */
+.fields-row .field-date { flex: 0 0 140px; }
 
 input.ro { background: #f1f5f9; color: #475569; }
 
