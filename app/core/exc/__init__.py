@@ -2,6 +2,7 @@ from app.core.exc.base import (
     AppException,
     BadRequestException,
     ForbiddenException,
+    ObjectAlreadyExistsException,
     ObjectNotFoundException,
     UnauthorizedException,
 )
@@ -11,6 +12,7 @@ __all__ = [
     "AppException",
     "BadRequestException",
     "ForbiddenException",
+    "ObjectAlreadyExistsException",
     "ObjectNotFoundException",
     "UnauthorizedException",
     "register_exception_handlers",

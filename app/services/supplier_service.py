@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exc import ObjectAlreadyExistsException
 from app.repositories.supplier_repo import SupplierRepository
 from app.schemas.supplier import SupplierResponse
 from app.services.audit_service import AuditService
@@ -16,6 +17,8 @@ class SupplierService:
         self.audit = AuditService(session)
 
     async def create(self, data: dict, user_uuid: UUID | None = None) -> SupplierResponse:
+        if await self.repo.get_by_name(data["name"]):
+            raise ObjectAlreadyExistsException("Dane już istnieją")
         row = await self.repo.create_one(data)
         await self.audit.log(user_uuid, "create", ENTITY, row.uuid, new_data=data)
         return SupplierResponse.model_validate(row)

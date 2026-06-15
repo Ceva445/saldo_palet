@@ -186,6 +186,20 @@ class TestSupplierAPI:
         assert len(data) == 2
 
 
+class TestMasterdataDuplicate:
+    """Adding an existing master-data name returns 409, not a 500."""
+
+    @pytest.mark.asyncio
+    async def test_duplicate_supplier_conflict(self, client):
+        name = f"Dup {uuid4().hex[:6]}"
+        first = await client.post("/suppliers", json={"name": name})
+        assert first.status_code == 200
+
+        again = await client.post("/suppliers", json={"name": name})
+        assert again.status_code == 409
+        assert again.json()["message"] == "Dane już istnieją"
+
+
 class TestSearchPagination:
     """Server-side search + pagination for masterdata lists."""
 

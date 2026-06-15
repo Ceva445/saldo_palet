@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.core.exc.base import (
     BadRequestException,
     ForbiddenException,
+    ObjectAlreadyExistsException,
     ObjectNotFoundException,
     UnauthorizedException,
 )
@@ -29,4 +30,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         ObjectNotFoundException,
         lambda _r, e: _json(e, status.HTTP_404_NOT_FOUND),
+    )
+    app.add_exception_handler(
+        ObjectAlreadyExistsException,
+        lambda _r, e: _json(e, status.HTTP_409_CONFLICT),
     )

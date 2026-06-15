@@ -10,6 +10,10 @@ class ObjectNotFoundException(AppException):
     pass
 
 
+class ObjectAlreadyExistsException(AppException):
+    pass
+
+
 class UnauthorizedException(AppException):
     pass
 
