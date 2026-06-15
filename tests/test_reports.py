@@ -59,7 +59,7 @@ class TestReportsAPI:
         data = rows[1]
         assert data[3] == 10  # IN
         assert data[4] == 3   # OUT
-        assert data[6] == 7   # Saldo (current stock)
+        assert data[6] == -7  # Saldo: receipts are debt (-10 + 3 returned)
 
     @pytest.mark.asyncio
     async def test_ksiegowania_xlsx(self, client, session):

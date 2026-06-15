@@ -87,10 +87,11 @@ async def run_import(session, rows, force: bool = False, progress=None) -> dict:
 
         key = (s_uuid, a_uuid, u_uuid)
         current = balances.get(key, 0)
+        # Receipts increase the debt (balance down); issues/corrections raise it.
         if op == "RECEIPT":
-            current += qty
-        elif op == "ISSUE":
             current -= qty
+        elif op == "ISSUE":
+            current += qty
         else:  # CORRECTION is a signed delta
             current += qty
         balances[key] = current

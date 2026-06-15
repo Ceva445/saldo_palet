@@ -1,5 +1,6 @@
 # tests/test_import.py
-from datetime import datetime
+from datetime import date, datetime
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import func, select
@@ -9,10 +10,17 @@ from app.models.supplier import Supplier
 from app.models.transaction import Transaction
 from app.models.unit import Unit
 from app.models.user import User
+from app.repositories.area_repo import AreaRepository
 from app.repositories.pallet_repo import PalletRepository
+from app.repositories.role_repo import RoleRepository
+from app.repositories.supplier_repo import SupplierRepository
+from app.repositories.transaction_repo import TransactionRepository
+from app.repositories.unit_repo import UnitRepository
+from app.repositories.user_repo import UserRepository
 from scripts._raport import Row
 from scripts.import_transactions import run_import
 from scripts.import_validate import run_validate
+from scripts.recompute_pallets import recompute
 
 
 def make_row(no, op, val, *, supplier="TUBADZIN", area="Stock", unit="EUR",
@@ -62,7 +70,7 @@ class TestImportTransactions:
         unit = (await session.execute(select(Unit))).scalar_one()
         area = (await session.execute(select(Area).where(Area.name == "Stock"))).scalar_one()
         pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
-        assert pallet.quantity == 7  # +10 IN, -3 OUT
+        assert pallet.quantity == -7  # IN 10 (owe), OUT 3 (returned) → -10 + 3
 
     @pytest.mark.asyncio
     async def test_correction_is_signed_delta(self, session):
@@ -77,7 +85,30 @@ class TestImportTransactions:
         unit = (await session.execute(select(Unit))).scalar_one()
         area = (await session.execute(select(Area).where(Area.name == "Stock"))).scalar_one()
         pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
-        assert pallet.quantity == 6  # +10 IN, -4 correction
+        assert pallet.quantity == -14  # IN 10 → -10, correction -4 → -14
+
+    @pytest.mark.asyncio
+    async def test_recompute_pallets_from_ledger(self, session):
+        supplier = await SupplierRepository(session).create_one({"name": f"S {uuid4().hex[:6]}"})
+        area = await AreaRepository(session).create_one({"name": "Stock"})
+        unit = await UnitRepository(session).create_one({"name": f"U {uuid4().hex[:6]}"})
+        role = await RoleRepository(session).create_one({"name": f"r{uuid4().hex[:6]}"})
+        user = await UserRepository(session).create_one(
+            {"username": f"e{uuid4().hex[:6]}", "hashed_password": "x", "role_uuid": role.uuid}
+        )
+
+        base = {"supplier_uuid": supplier.uuid, "area_uuid": area.uuid,
+                "unit_uuid": unit.uuid, "user_uuid": user.uuid, "operation_date": date(2025, 10, 22)}
+        tx_repo = TransactionRepository(session)
+        await tx_repo.create_one({**base, "type": "RECEIPT", "quantity": 10})
+        await tx_repo.create_one({**base, "type": "ISSUE", "quantity": 3})
+        await session.commit()
+
+        n = await recompute(session)
+        assert n == 1
+
+        pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
+        assert pallet.quantity == -7  # -10 receipt + 3 issue
 
     @pytest.mark.asyncio
     async def test_refuses_second_run_without_force(self, session):

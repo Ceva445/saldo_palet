@@ -146,8 +146,9 @@ class ReportService:
         rows = []
         for s_uuid, a_uuid, u_uuid, quantity, supplier, unit, area in result.all():
             in_, out, kor = agg.get((s_uuid, a_uuid, u_uuid), (0, 0, 0))
-            # Full report: current stock. Range report: net movement in the window.
-            saldo = (in_ - out) if ranged else quantity
+            # Full report: current balance. Range report: net change in the window.
+            # Receipts lower the balance, issues and corrections raise it.
+            saldo = (out - in_ + kor) if ranged else quantity
             rows.append([
                 supplier, unit, area, in_, out, kor,
                 saldo, round(saldo * 0.98), round(saldo * 0.99),

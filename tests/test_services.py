@@ -271,9 +271,10 @@ class TestTransactionService:
         }
 
     @pytest.mark.asyncio
-    async def test_create_receipt_transaction(self, session, setup_data):
+    async def test_receipt_makes_balance_negative(self, session, setup_data):
         service = TransactionService(session)
-        
+        pallet_repo = PalletRepository(session)
+
         result = await service.create_transaction({
             "type": "RECEIPT",
             "supplier_uuid": setup_data["supplier_uuid"],
@@ -282,32 +283,42 @@ class TestTransactionService:
             "quantity": 10,
             "comment": "Test receipt"
         }, setup_data["user_uuid"])
-        
+
         assert result.status == "ok"
 
+        pallet = await pallet_repo.get_stock(
+            setup_data["supplier_uuid"],
+            setup_data["area_uuid"],
+            setup_data["unit_uuid"],
+        )
+        assert pallet.quantity == -10  # receiving = we owe pallets
+
     @pytest.mark.asyncio
-    async def test_issue_insufficient_stock(self, session, setup_data):
+    async def test_issue_reduces_debt(self, session, setup_data):
         service = TransactionService(session)
-        
         pallet_repo = PalletRepository(session)
         await pallet_repo.create_one({
             "supplier_uuid": setup_data["supplier_uuid"],
             "area_uuid": setup_data["area_uuid"],
             "unit_uuid": setup_data["unit_uuid"],
-            "quantity": 5
+            "quantity": -10,
         })
 
-        with pytest.raises(Exception) as exc_info:
-            await service.create_transaction({
-                "type": "ISSUE",
-                "supplier_uuid": setup_data["supplier_uuid"],
-                "area_uuid": setup_data["area_uuid"],
-                "unit_uuid": setup_data["unit_uuid"],
-                "quantity": 10,
-                "comment": None
-            }, setup_data["user_uuid"])
-        
-        assert "Not enough stock" in str(exc_info.value)
+        await service.create_transaction({
+            "type": "ISSUE",
+            "supplier_uuid": setup_data["supplier_uuid"],
+            "area_uuid": setup_data["area_uuid"],
+            "unit_uuid": setup_data["unit_uuid"],
+            "quantity": 6,
+            "comment": None,
+        }, setup_data["user_uuid"])
+
+        pallet = await pallet_repo.get_stock(
+            setup_data["supplier_uuid"],
+            setup_data["area_uuid"],
+            setup_data["unit_uuid"],
+        )
+        assert pallet.quantity == -4  # -10 + 6 returned
 
     @pytest.mark.asyncio
     async def test_create_correction_transaction(self, session, setup_data):

@@ -36,14 +36,14 @@ class TransactionService:
 
         t_type = data["type"]
 
+        # Balance = pallets we owe the supplier (negative = debt).
+        # Receiving goods means we owe pallets → balance goes down;
+        # issuing (returning) pallets reduces the debt → balance goes up.
         if t_type == TransactionType.RECEIPT:
-            pallet.quantity += data["quantity"]
+            pallet.quantity -= data["quantity"]
 
         elif t_type == TransactionType.ISSUE:
-            if pallet.quantity < data["quantity"]:
-                raise BadRequestException("Not enough stock")
-
-            pallet.quantity -= data["quantity"]
+            pallet.quantity += data["quantity"]
 
         elif t_type == TransactionType.CORRECTION:
             # Delta adjustment (may be negative), not an absolute value.
