@@ -13,5 +13,5 @@ htmlcov/
 .DS_Store
 test.db
 tests_result.txt
-tbl_raport.xlsx
+*.xlsx
 validate_report.txt

@@ -20,6 +20,7 @@ from app.repositories.user_repo import UserRepository
 from scripts._raport import Row
 from scripts.import_transactions import run_import
 from scripts.import_validate import run_validate
+from scripts.import_opening_balances import run_import_opening
 from scripts.recompute_pallets import recompute
 
 
@@ -109,6 +110,25 @@ class TestImportTransactions:
 
         pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
         assert pallet.quantity == -7  # -10 receipt + 3 issue
+
+    @pytest.mark.asyncio
+    async def test_import_opening_balances(self, session):
+        # Script creates missing master data and sets opening_balance; zeros skipped.
+        rows = [
+            ("Amica", "EUR", "Stock", -50),
+            ("Amica", "EUR", "Zwroty", 0),   # skipped (zero)
+        ]
+        result = await run_import_opening(session, rows)
+
+        assert result["applied"] == 1
+        assert result["skipped_zero"] == 1
+        assert result["created_masterdata"]["suppliers"] == 1
+
+        supplier = (await session.execute(select(Supplier).where(Supplier.name == "Amica"))).scalar_one()
+        area = (await session.execute(select(Area).where(Area.name == "Stock"))).scalar_one()
+        unit = (await session.execute(select(Unit).where(Unit.name == "EUR"))).scalar_one()
+        pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
+        assert pallet.opening_balance == -50
 
     @pytest.mark.asyncio
     async def test_refuses_second_run_without_force(self, session):

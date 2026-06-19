@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -26,10 +26,19 @@ class Pallet(BaseModel, UUIDMixin, TimestampMixin):
         nullable=False,
     )
 
+    # Net movement from this system's transactions (debt convention).
     quantity = Column(
         Integer,
         nullable=False,
         default=0,
+    )
+
+    # Migrated starting balance from the old system; current = opening_balance + quantity.
+    opening_balance = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
     )
 
     supplier = relationship(

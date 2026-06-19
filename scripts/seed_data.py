@@ -12,12 +12,16 @@ import asyncio
 import os
 import secrets
 
+from dotenv import load_dotenv
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
 from app.models.role import Role
 from app.models.user import User
+
+# Make variables from the .env file visible to os.getenv (shell vars still win).
+load_dotenv()
 
 ROLES = [
     ("admin", "Full access to all modules"),

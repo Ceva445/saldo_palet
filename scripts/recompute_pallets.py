@@ -13,7 +13,7 @@ Usage:
 import asyncio
 from uuid import uuid4
 
-from sqlalchemy import case, delete, func, insert, select
+from sqlalchemy import case, func, insert, select
 
 from app.core.database import AsyncSessionLocal
 from app.models.pallet import Pallet
@@ -22,7 +22,7 @@ from app.models.transaction import Transaction, TransactionType
 
 async def recompute(session) -> int:
     t = Transaction
-    balance = func.sum(
+    movement = func.sum(
         case(
             (t.type == TransactionType.RECEIPT.value, -t.quantity),
             (t.type == TransactionType.ISSUE.value, t.quantity),
@@ -32,29 +32,37 @@ async def recompute(session) -> int:
     )
 
     query = select(
-        t.supplier_uuid, t.area_uuid, t.unit_uuid, balance
+        t.supplier_uuid, t.area_uuid, t.unit_uuid, movement
     ).group_by(t.supplier_uuid, t.area_uuid, t.unit_uuid)
-
     groups = (await session.execute(query)).all()
 
-    new_pallets = [
-        {
-            "uuid": uuid4(),
-            "supplier_uuid": s_uuid,
-            "area_uuid": a_uuid,
-            "unit_uuid": u_uuid,
-            "quantity": int(bal or 0),
-        }
-        for s_uuid, a_uuid, u_uuid, bal in groups
-    ]
+    # Keep opening_balance intact; only recompute the movement part (quantity).
+    existing = {
+        (p.supplier_uuid, p.area_uuid, p.unit_uuid): p
+        for p in (await session.execute(select(Pallet))).scalars()
+    }
+    for pallet in existing.values():
+        pallet.quantity = 0
 
-    # Pallets are derived data — rebuild them from scratch.
-    await session.execute(delete(Pallet))
+    new_pallets = []
+    for s_uuid, a_uuid, u_uuid, bal in groups:
+        pallet = existing.get((s_uuid, a_uuid, u_uuid))
+        if pallet:
+            pallet.quantity = int(bal or 0)
+        else:
+            new_pallets.append({
+                "uuid": uuid4(),
+                "supplier_uuid": s_uuid,
+                "area_uuid": a_uuid,
+                "unit_uuid": u_uuid,
+                "quantity": int(bal or 0),
+            })
+
     if new_pallets:
         await session.execute(insert(Pallet), new_pallets)
     await session.commit()
 
-    return len(new_pallets)
+    return len(existing) + len(new_pallets)
 
 
 async def _main() -> None:

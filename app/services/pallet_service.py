@@ -20,7 +20,7 @@ class PalletService:
                 supplier_name=p.supplier.name,
                 area_name=p.area.name,
                 unit_name=p.unit.name,
-                quantity=p.quantity,
+                quantity=p.opening_balance + p.quantity,  # opening + movements
             )
             for p in rows
         ]

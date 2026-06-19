@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy import case, func, select
@@ -22,8 +22,8 @@ HISTORY_HEADERS = [
     "Wartosc", "Jednostka", "Obszar", "Komentarz",
 ]
 SALDO_HEADERS = [
-    "Dostawca", "Jednostka", "Obszar", "IN", "OUT", "Korekty",
-    "Saldo", "Saldo-2%", "Saldo-1%",
+    "Dostawca", "Jednostka", "Obszar", "Saldo_początkowe", "IN", "OUT", "Korekty",
+    "Saldo_końcowe", "Saldo-2%", "Saldo-1%",
 ]
 
 
@@ -123,10 +123,18 @@ class ReportService:
         ranged = start is not None and end is not None
         agg = await self._aggregate_by_uuid(supplier_uuid, area_uuid, unit_uuid, start, end)
 
-        # Pallet rows give names + the authoritative current balance.
+        # For a range, the opening balance = migrated opening + movements before the window.
+        before = {}
+        if ranged:
+            before = await self._aggregate_by_uuid(
+                supplier_uuid, area_uuid, unit_uuid, None, start - timedelta(days=1)
+            )
+
+        # Pallet rows give names, the migrated opening balance and the movements.
         query = (
             select(
-                Pallet.supplier_uuid, Pallet.area_uuid, Pallet.unit_uuid, Pallet.quantity,
+                Pallet.supplier_uuid, Pallet.area_uuid, Pallet.unit_uuid,
+                Pallet.quantity, Pallet.opening_balance,
                 Supplier.name, Unit.name, Area.name,
             )
             .join(Supplier, Pallet.supplier_uuid == Supplier.uuid)
@@ -144,14 +152,20 @@ class ReportService:
         result = await self.session.execute(query)
 
         rows = []
-        for s_uuid, a_uuid, u_uuid, quantity, supplier, unit, area in result.all():
+        for s_uuid, a_uuid, u_uuid, quantity, opening, supplier, unit, area in result.all():
             in_, out, kor = agg.get((s_uuid, a_uuid, u_uuid), (0, 0, 0))
-            # Full report: current balance. Range report: net change in the window.
             # Receipts lower the balance, issues and corrections raise it.
-            saldo = (out - in_ + kor) if ranged else quantity
+            if ranged:
+                b_in, b_out, b_kor = before.get((s_uuid, a_uuid, u_uuid), (0, 0, 0))
+                saldo_start = opening + (b_out - b_in + b_kor)
+                saldo_end = saldo_start + (out - in_ + kor)
+            else:
+                saldo_start = opening
+                saldo_end = opening + quantity
+
             rows.append([
-                supplier, unit, area, in_, out, kor,
-                saldo, round(saldo * 0.98), round(saldo * 0.99),
+                supplier, unit, area, saldo_start, in_, out, kor,
+                saldo_end, round(saldo_end * 0.98), round(saldo_end * 0.99),
             ])
 
         sheet = "Saldo_zakres" if ranged else "Saldo"

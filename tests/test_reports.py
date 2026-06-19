@@ -8,6 +8,7 @@ from openpyxl import load_workbook
 from app.dependencies import get_current_user
 from app.main import app
 from app.repositories.area_repo import AreaRepository
+from app.repositories.pallet_repo import PalletRepository
 from app.repositories.supplier_repo import SupplierRepository
 from app.repositories.unit_repo import UnitRepository
 from app.repositories.user_repo import UserRepository
@@ -54,12 +55,25 @@ class TestReportsAPI:
 
         ws = load_workbook(BytesIO(res.content)).active
         rows = list(ws.iter_rows(values_only=True))
-        assert rows[0] == ("Dostawca", "Jednostka", "Obszar", "IN", "OUT",
-                           "Korekty", "Saldo", "Saldo-2%", "Saldo-1%")
+        assert rows[0] == ("Dostawca", "Jednostka", "Obszar", "Saldo_początkowe",
+                           "IN", "OUT", "Korekty", "Saldo_końcowe", "Saldo-2%", "Saldo-1%")
         data = rows[1]
-        assert data[3] == 10  # IN
-        assert data[4] == 3   # OUT
-        assert data[6] == -7  # Saldo: receipts are debt (-10 + 3 returned)
+        assert data[3] == 0   # Saldo_początkowe (no opening set)
+        assert data[4] == 10  # IN
+        assert data[5] == 3   # OUT
+        assert data[7] == -7  # Saldo_końcowe: opening 0 + (-10 + 3)
+
+    @pytest.mark.asyncio
+    async def test_saldo_with_opening_balance(self, client, session):
+        supplier, area, unit = await _seed(session)  # movements → quantity -7
+        pallet = await PalletRepository(session).get_stock(supplier.uuid, area.uuid, unit.uuid)
+        pallet.opening_balance = -100
+        await session.commit()
+
+        ws = load_workbook(BytesIO((await client.get("/reports/saldo")).content)).active
+        data = list(ws.iter_rows(values_only=True))[1]
+        assert data[3] == -100   # Saldo_początkowe
+        assert data[7] == -107   # Saldo_końcowe = -100 + (-7)
 
     @pytest.mark.asyncio
     async def test_ksiegowania_xlsx(self, client, session):
