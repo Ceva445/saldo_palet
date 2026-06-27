@@ -1,4 +1,5 @@
 # tests/test_reports.py
+import re
 from io import BytesIO
 from uuid import uuid4
 
@@ -74,6 +75,19 @@ class TestReportsAPI:
         data = list(ws.iter_rows(values_only=True))[1]
         assert data[3] == -100   # Saldo_początkowe
         assert data[7] == -107   # Saldo_końcowe = -100 + (-7)
+
+    @pytest.mark.asyncio
+    async def test_filename_template(self, client, session):
+        supplier, _area, _unit = await _seed(session)
+
+        res = await client.get("/reports/saldo")
+        cd = res.headers["content-disposition"]
+        assert re.search(r'filename="\d{2}-\d{2}-\d{4}-ALL-Saldo\.xlsx"', cd)
+
+        res2 = await client.get(f"/reports/saldo?supplier_uuid={supplier.uuid}")
+        cd2 = res2.headers["content-disposition"]
+        assert re.search(r'filename="\d{2}-\d{2}-\d{4}-.+-Saldo\.xlsx"', cd2)
+        assert "-ALL-" not in cd2  # supplier name used, not ALL
 
     @pytest.mark.asyncio
     async def test_ksiegowania_xlsx(self, client, session):
