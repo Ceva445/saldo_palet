@@ -19,10 +19,17 @@ class UserResponse(BaseModel):
     is_active: bool
     role: str
     permissions: list[str] = []
+    must_change_password: bool = False
 
     model_config = {
         "from_attributes": True
     }
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
 
 class UserCreate(BaseModel):
     username: str

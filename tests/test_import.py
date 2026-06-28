@@ -46,8 +46,10 @@ class TestImportValidate:
         assert report["valid_rows"] == 2
         assert len(report["errors"]) == 1
 
-        users = (await session.execute(select(User))).scalars().all()
-        assert any(u.username == "ext_u" for u in users)
+        from app.core.security import verify_password
+        user = (await session.execute(select(User).where(User.username == "ext_u"))).scalar_one()
+        assert user.must_change_password is True
+        assert verify_password("123", user.hashed_password)
 
 
 class TestImportTransactions:

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, String
+from sqlalchemy import Boolean, Column, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -13,6 +13,14 @@ class User(BaseModel, UUIDMixin, TimestampMixin):
     hashed_password = Column(String(255), nullable=False)
 
     is_active = Column(Boolean, default=True)
+
+    # Forces a password change on next login (e.g. imported users with a shared password).
+    must_change_password = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
 
     role_uuid = Column(
         UUID(as_uuid=True),

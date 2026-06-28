@@ -13,6 +13,7 @@ class UserUpdate(BaseModel):
     username: str | None = None
     password: str | None = None
     role: str | None = None
+    must_change_password: bool | None = None
 
 
 class UserOut(BaseModel):
@@ -20,6 +21,7 @@ class UserOut(BaseModel):
     username: str
     role: str
     is_active: bool
+    must_change_password: bool = False
 
     model_config = {
         "from_attributes": True

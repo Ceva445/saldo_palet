@@ -13,7 +13,6 @@ Run this BEFORE scripts.import_transactions.
 """
 import argparse
 import asyncio
-import secrets
 
 from sqlalchemy import select
 
@@ -100,11 +99,13 @@ async def run_validate(session, rows) -> dict:
 
     for name in distinct["users"]:
         if name not in existing_users:
+            # Imported users get a shared password "123" and must change it on first login.
             session.add(User(
                 username=name,
-                hashed_password=hash_password(secrets.token_hex(16)),
+                hashed_password=hash_password("123"),
                 role_uuid=role.uuid,
                 is_active=True,
+                must_change_password=True,
             ))
             created["users"].append(name)
     for name in distinct["suppliers"]:

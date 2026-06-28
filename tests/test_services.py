@@ -393,3 +393,42 @@ class TestTransactionService:
             }, setup_data["user_uuid"])
         
         assert "Invalid transaction type" in str(exc_info.value)
+
+class TestChangePassword:
+    """AuthService.change_password verifies the old password and clears the flag."""
+
+    async def _make_user(self, session):
+        from app.core.security import hash_password
+        from app.models.role import Role
+        from app.models.user import User
+
+        role = Role(name=f"r{uuid4().hex[:6]}")
+        session.add(role)
+        await session.flush()
+        user = User(
+            username=f"u{uuid4().hex[:6]}",
+            hashed_password=hash_password("123"),
+            role_uuid=role.uuid,
+            is_active=True,
+            must_change_password=True,
+        )
+        session.add(user)
+        await session.commit()
+        return user
+
+    @pytest.mark.asyncio
+    async def test_change_password_clears_flag(self, session):
+        from app.core.security import verify_password
+
+        user = await self._make_user(session)
+        await AuthService(session).change_password(user, "123", "newpass")
+
+        assert user.must_change_password is False
+        assert verify_password("newpass", user.hashed_password)
+
+    @pytest.mark.asyncio
+    async def test_change_password_wrong_old(self, session):
+        user = await self._make_user(session)
+        with pytest.raises(Exception) as exc:
+            await AuthService(session).change_password(user, "wrong", "newpass")
+        assert "stare" in str(exc.value).lower()

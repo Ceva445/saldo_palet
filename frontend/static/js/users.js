@@ -35,6 +35,7 @@ async function loadUsers() {
           <td>${esc(u.username)}</td>
           <td>${esc(u.role)}</td>
           <td>${u.is_active ? "aktywny" : "nieaktywny"}</td>
+          <td>${u.must_change_password ? "wymagana" : "—"}</td>
           <td class="actions">
             <button class="edit" data-action="edit" data-uuid="${u.uuid}">Edytuj</button>
             ${self ? "" : `<button class="danger" data-action="delete" data-uuid="${u.uuid}">Usuń</button>`}
@@ -79,6 +80,7 @@ function startEdit(uuid) {
   document.getElementById("edit-username").value = user.username;
   document.getElementById("edit-password").value = "";
   document.getElementById("edit-role").value = user.role;
+  document.getElementById("edit-must-change").checked = !!user.must_change_password;
   document.getElementById("edit-msg").textContent = "";
   document.getElementById("edit-section").classList.remove("hidden");
   document.getElementById("edit-section").scrollIntoView({ behavior: "smooth" });
@@ -98,6 +100,7 @@ async function saveEdit() {
   const body = {
     username: document.getElementById("edit-username").value.trim(),
     role: document.getElementById("edit-role").value,
+    must_change_password: document.getElementById("edit-must-change").checked,
   };
   const password = document.getElementById("edit-password").value;
   if (password) body.password = password;

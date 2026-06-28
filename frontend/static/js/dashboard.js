@@ -359,6 +359,10 @@ async function boot() {
   }
   try {
     state.user = await api("/auth/me");
+    if (state.user.must_change_password) {
+      location.href = "/change-password";
+      return;
+    }
     document.getElementById("user-info").textContent =
       `${state.user.username} (${state.user.role})`;
     if (can("users")) {

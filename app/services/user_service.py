@@ -17,7 +17,10 @@ class UserService:
     async def list_users(self) -> list[UserOut]:
         users = await self.repo.get_all_with_roles()
         return [
-            UserOut(uuid=u.uuid, username=u.username, role=u.role.name, is_active=u.is_active)
+            UserOut(
+                uuid=u.uuid, username=u.username, role=u.role.name,
+                is_active=u.is_active, must_change_password=u.must_change_password,
+            )
             for u in users
         ]
 
@@ -44,7 +47,10 @@ class UserService:
             "is_active": True,
         })
 
-        return UserOut(uuid=user.uuid, username=user.username, role=role.name, is_active=user.is_active)
+        return UserOut(
+            uuid=user.uuid, username=user.username, role=role.name,
+            is_active=user.is_active, must_change_password=user.must_change_password,
+        )
 
     async def update_user(
         self,
@@ -52,6 +58,7 @@ class UserService:
         username: str | None = None,
         password: str | None = None,
         role_name: str | None = None,
+        must_change_password: bool | None = None,
     ) -> UserOut:
         user = await self.repo.get_with_role(user_uuid)
         if user is None:
@@ -60,6 +67,7 @@ class UserService:
         update: dict = {}
         new_username = user.username
         role_label = user.role.name
+        flag = user.must_change_password
 
         if username is not None:
             new_username = username.strip()
@@ -80,10 +88,17 @@ class UserService:
             update["role_uuid"] = role.uuid
             role_label = role.name
 
+        if must_change_password is not None:
+            update["must_change_password"] = must_change_password
+            flag = must_change_password
+
         if update:
             await self.repo.update_one(user_uuid, update)
 
-        return UserOut(uuid=user_uuid, username=new_username, role=role_label, is_active=user.is_active)
+        return UserOut(
+            uuid=user_uuid, username=new_username, role=role_label,
+            is_active=user.is_active, must_change_password=flag,
+        )
 
     async def delete_user(self, user_uuid: UUID) -> None:
         user = await self.repo.get_one(uuid=user_uuid)

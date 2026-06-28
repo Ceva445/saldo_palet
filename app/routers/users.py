@@ -57,6 +57,7 @@ async def update_user(
         payload.username,
         payload.password,
         payload.role,
+        payload.must_change_password,
     )
     await session.commit()
     return user

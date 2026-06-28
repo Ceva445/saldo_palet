@@ -31,6 +31,10 @@
         <input id="edit-password" type="password" autocomplete="new-password" />
         <label>Rola</label>
         <select id="edit-role"></select>
+        <label style="margin-top:10px">
+            <input type="checkbox" id="edit-must-change" style="width:auto;margin-right:6px" />
+            Wymuś zmianę hasła przy logowaniu
+        </label>
         <div class="row">
             <button id="save-edit-btn">Zapisz</button>
             <button id="cancel-edit-btn" class="secondary">Anuluj</button>
@@ -42,7 +46,7 @@
         <h2>Użytkownicy</h2>
         <table>
             <thead>
-                <tr><th>Użytkownik</th><th>Rola</th><th>Status</th><th></th></tr>
+                <tr><th>Użytkownik</th><th>Rola</th><th>Status</th><th>Zmiana hasła</th><th></th></tr>
             </thead>
             <tbody id="users-body"></tbody>
         </table>

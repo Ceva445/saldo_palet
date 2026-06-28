@@ -77,6 +77,7 @@ async def client(session) -> AsyncGenerator[AsyncClient, None]:
         'uuid': uuid4(),
         'username': 'testuser',
         'is_active': True,
+        'must_change_password': False,
         'role': type('MockRole', (), {
             'uuid': uuid4(),
             'name': 'admin'

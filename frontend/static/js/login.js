@@ -15,7 +15,7 @@ async function submit() {
       },
     });
     localStorage.setItem("token", data.access_token);
-    location.href = "/dashboard";
+    location.href = data.user.must_change_password ? "/change-password" : "/dashboard";
   } catch (e) {
     msg.textContent = e.message;
   }

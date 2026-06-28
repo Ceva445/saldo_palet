@@ -87,3 +87,8 @@ async def admin_page(request: Request):
 @app.get("/stock")
 async def stock_page(request: Request):
     return templates.TemplateResponse(request, "stock.html")
+
+
+@app.get("/change-password")
+async def change_password_page(request: Request):
+    return templates.TemplateResponse(request, "change_password.html")
