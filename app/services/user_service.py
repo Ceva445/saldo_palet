@@ -28,7 +28,13 @@ class UserService:
         roles = await self.role_repo.get_all(order_by=[Role.name])
         return [RoleOut.model_validate(r) for r in roles]
 
-    async def create_user(self, username: str, password: str, role_name: str) -> UserOut:
+    async def create_user(
+        self,
+        username: str,
+        password: str,
+        role_name: str,
+        must_change_password: bool = False,
+    ) -> UserOut:
         username = username.strip()
         if not username or not password:
             raise BadRequestException("Username and password are required")
@@ -45,6 +51,7 @@ class UserService:
             "hashed_password": hash_password(password),
             "role_uuid": role.uuid,
             "is_active": True,
+            "must_change_password": must_change_password,
         })
 
         return UserOut(

@@ -54,8 +54,10 @@ class TestUsersAPI:
 
         created = await client.post(
             "/users",
-            json={"username": "jan", "password": "secret", "role": "operator"},
+            json={"username": "jan", "password": "secret", "role": "operator",
+                  "must_change_password": True},
         )
+        assert created.json()["must_change_password"] is True
         uuid = created.json()["uuid"]
 
         res = await client.put(

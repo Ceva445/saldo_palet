@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     role: str
+    must_change_password: bool = False
 
 
 class UserUpdate(BaseModel):

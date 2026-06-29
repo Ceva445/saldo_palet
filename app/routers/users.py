@@ -38,7 +38,9 @@ async def create_user(
 ):
     service = UserService(session)
 
-    user = await service.create_user(payload.username, payload.password, payload.role)
+    user = await service.create_user(
+        payload.username, payload.password, payload.role, payload.must_change_password
+    )
     await session.commit()
     return user
 

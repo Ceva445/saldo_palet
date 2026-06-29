@@ -53,6 +53,7 @@ async function createUser() {
   const username = document.getElementById("new-username").value.trim();
   const password = document.getElementById("new-password").value;
   const role = document.getElementById("new-role").value;
+  const mustChange = document.getElementById("new-must-change").checked;
 
   if (!username || !password) {
     msg.classList.add("error");
@@ -61,9 +62,13 @@ async function createUser() {
   }
 
   try {
-    await api("/users", { method: "POST", body: { username, password, role } });
+    await api("/users", {
+      method: "POST",
+      body: { username, password, role, must_change_password: mustChange },
+    });
     document.getElementById("new-username").value = "";
     document.getElementById("new-password").value = "";
+    document.getElementById("new-must-change").checked = false;
     msg.classList.add("ok");
     msg.textContent = "Użytkownik dodany";
     await loadUsers();
