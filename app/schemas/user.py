@@ -15,6 +15,7 @@ class UserUpdate(BaseModel):
     password: str | None = None
     role: str | None = None
     must_change_password: bool | None = None
+    is_active: bool | None = None
 
 
 class UserOut(BaseModel):

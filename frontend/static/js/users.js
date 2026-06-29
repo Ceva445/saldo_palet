@@ -85,6 +85,7 @@ function startEdit(uuid) {
   document.getElementById("edit-username").value = user.username;
   document.getElementById("edit-password").value = "";
   document.getElementById("edit-role").value = user.role;
+  document.getElementById("edit-active").checked = !!user.is_active;
   document.getElementById("edit-must-change").checked = !!user.must_change_password;
   document.getElementById("edit-msg").textContent = "";
   document.getElementById("edit-section").classList.remove("hidden");
@@ -106,6 +107,7 @@ async function saveEdit() {
     username: document.getElementById("edit-username").value.trim(),
     role: document.getElementById("edit-role").value,
     must_change_password: document.getElementById("edit-must-change").checked,
+    is_active: document.getElementById("edit-active").checked,
   };
   const password = document.getElementById("edit-password").value;
   if (password) body.password = password;

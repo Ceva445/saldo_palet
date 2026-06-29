@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exc import BadRequestException
+from app.core.exc import BadRequestException, ForbiddenException
 from app.core.jwt import create_access_token
 from app.core.security import hash_password, verify_password
 from app.repositories.user_repo import UserRepository
@@ -32,6 +32,9 @@ class AuthService:
 
         if not user or not verify_password(password, user.hashed_password):
             return None
+
+        if not user.is_active:
+            raise ForbiddenException("Konto jest nieaktywne")
 
         token = create_access_token({"sub": str(user.uuid)})
         return LoginResponse(access_token=token, user=self._user_response(user))

@@ -50,8 +50,11 @@ async def update_user(
     user_uuid: UUID,
     payload: UserUpdate,
     session: AsyncSession = Depends(get_session),
-    _: User = Depends(require_permission("users")),
+    current_user: User = Depends(require_permission("users")),
 ):
+    if user_uuid == current_user.uuid and payload.is_active is False:
+        raise ForbiddenException("You cannot deactivate your own account")
+
     service = UserService(session)
 
     user = await service.update_user(
@@ -60,6 +63,7 @@ async def update_user(
         payload.password,
         payload.role,
         payload.must_change_password,
+        payload.is_active,
     )
     await session.commit()
     return user

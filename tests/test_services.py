@@ -188,10 +188,23 @@ class TestAuthService:
     @pytest.mark.asyncio
     async def test_login_invalid_username(self, session, setup_user):
         service = AuthService(session)
-        
+
         result = await service.login("nonexistent", "testpassword")
 
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_login_inactive_rejected(self, session, setup_user):
+        # Deactivate the seeded user, then login must be refused.
+        await session.execute(
+            text("UPDATE users SET is_active = 0 WHERE username = 'testuser'")
+        )
+        await session.commit()
+
+        service = AuthService(session)
+        with pytest.raises(Exception) as exc:
+            await service.login("testuser", "testpassword")
+        assert "nieaktywne" in str(exc.value).lower()
 
 
 class TestPermissionService:

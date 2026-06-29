@@ -66,6 +66,7 @@ class UserService:
         password: str | None = None,
         role_name: str | None = None,
         must_change_password: bool | None = None,
+        is_active: bool | None = None,
     ) -> UserOut:
         user = await self.repo.get_with_role(user_uuid)
         if user is None:
@@ -75,6 +76,7 @@ class UserService:
         new_username = user.username
         role_label = user.role.name
         flag = user.must_change_password
+        active = user.is_active
 
         if username is not None:
             new_username = username.strip()
@@ -99,12 +101,16 @@ class UserService:
             update["must_change_password"] = must_change_password
             flag = must_change_password
 
+        if is_active is not None:
+            update["is_active"] = is_active
+            active = is_active
+
         if update:
             await self.repo.update_one(user_uuid, update)
 
         return UserOut(
             uuid=user_uuid, username=new_username, role=role_label,
-            is_active=user.is_active, must_change_password=flag,
+            is_active=active, must_change_password=flag,
         )
 
     async def delete_user(self, user_uuid: UUID) -> None:
