@@ -11,6 +11,8 @@ engine = create_async_engine(
     settings.db.url,
     echo=False,
     pool_pre_ping=True,
+    # Store now() defaults (created_at/updated_at) in local time, not UTC.
+    connect_args={"server_settings": {"timezone": settings.app.TIMEZONE}},
 )
 
 AsyncSessionLocal = async_sessionmaker(

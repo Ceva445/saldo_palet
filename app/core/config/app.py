@@ -10,3 +10,5 @@ class AppConfig(BaseConfig):
     DEBUG: bool = False
     # Same-origin by default (frontend is served by this app).
     CORS_ORIGINS: list[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
+    # DB session timezone so now() defaults are stored in local wall-clock time.
+    TIMEZONE: str = "Europe/Warsaw"
