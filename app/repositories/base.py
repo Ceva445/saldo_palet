@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
@@ -182,10 +181,7 @@ class BaseRepository(Generic[ModelType]):
         for key, value in data.items():
             setattr(obj, key, value)
 
-        # Naive UTC to match the TIMESTAMP WITHOUT TIME ZONE columns (asyncpg
-        # rejects tz-aware values for naive columns).
-        obj.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
-
+        # updated_at is handled by the column's onupdate=local_now (naive local time).
         await self.session.flush()
         return obj
 

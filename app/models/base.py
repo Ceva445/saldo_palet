@@ -4,13 +4,16 @@ from sqlalchemy import Column, DateTime, func, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base
 
+from app.core.timeutils import local_now
+
 Base = declarative_base()
 
 
 class CreatedAtMixin:
+    # Python-side default in local time (deterministic, independent of DB tz).
     created_at = Column(
         DateTime,
-        default=func.now(),
+        default=local_now,
         server_default=func.now(),
         index=True,
     )
@@ -19,9 +22,9 @@ class CreatedAtMixin:
 class UpdatedAtMixin:
     updated_at = Column(
         DateTime,
-        default=func.now(),
+        default=local_now,
         server_default=func.now(),
-        onupdate=func.now(),
+        onupdate=local_now,
     )
 
 

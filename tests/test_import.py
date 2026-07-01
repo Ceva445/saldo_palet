@@ -133,6 +133,34 @@ class TestImportTransactions:
         assert pallet.opening_balance == -50
 
     @pytest.mark.asyncio
+    async def test_shift_created_at_window(self, session):
+        from scripts.fix_transaction_times import shift_created_at
+
+        supplier = await SupplierRepository(session).create_one({"name": f"S {uuid4().hex[:6]}"})
+        area = await AreaRepository(session).create_one({"name": f"A {uuid4().hex[:6]}"})
+        unit = await UnitRepository(session).create_one({"name": f"U {uuid4().hex[:6]}"})
+        role = await RoleRepository(session).create_one({"name": f"r{uuid4().hex[:6]}"})
+        user = await UserRepository(session).create_one(
+            {"username": f"e{uuid4().hex[:6]}", "hashed_password": "x", "role_uuid": role.uuid}
+        )
+        base = {
+            "supplier_uuid": supplier.uuid, "area_uuid": area.uuid, "unit_uuid": unit.uuid,
+            "user_uuid": user.uuid, "operation_date": date(2026, 6, 30),
+            "quantity": 1, "type": "RECEIPT",
+        }
+        tx_repo = TransactionRepository(session)
+        inside = await tx_repo.create_one({**base, "created_at": datetime(2026, 6, 30, 10, 0)})
+        outside = await tx_repo.create_one({**base, "created_at": datetime(2026, 6, 20, 10, 0)})
+        await session.commit()
+
+        n = await shift_created_at(
+            session, datetime(2026, 6, 29), datetime(2026, 7, 2), hours=2, dry_run=False
+        )
+        assert n == 1
+        assert inside.created_at == datetime(2026, 6, 30, 12, 0)   # +2h
+        assert outside.created_at == datetime(2026, 6, 20, 10, 0)  # untouched
+
+    @pytest.mark.asyncio
     async def test_refuses_second_run_without_force(self, session):
         rows = [make_row(2, "IN", -1)]
         await run_validate(session, rows)

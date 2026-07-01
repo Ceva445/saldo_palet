@@ -77,6 +77,16 @@ class TestAreaRepository:
         assert updated.name != original_name
 
     @pytest.mark.asyncio
+    async def test_created_at_uses_local_time(self, session):
+        # created_at must match local_now (Europe/Warsaw), not UTC.
+        from app.core.timeutils import local_now
+
+        area = await AreaRepository(session).create_one({"name": f"TZ {uuid4().hex[:8]}"})
+
+        assert area.created_at.tzinfo is None
+        assert abs((area.created_at - local_now()).total_seconds()) < 5
+
+    @pytest.mark.asyncio
     async def test_update_sets_naive_datetime(self, session):
         # updated_at must be naive UTC so asyncpg accepts it for the
         # TIMESTAMP WITHOUT TIME ZONE column on Postgres.

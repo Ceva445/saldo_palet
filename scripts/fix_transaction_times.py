@@ -1,8 +1,8 @@
 """One-off fix for transactions whose created_at was stored in UTC.
 
-Before the DB session timezone was set to Europe/Warsaw, UI-created transactions
-got created_at from the server clock (UTC on Render) — i.e. 2 hours behind local
-time in summer. Imported (Excel) transactions already had correct local time.
+Before created_at got a local-time default, UI transactions took created_at from
+the DB/server clock (UTC on Render) — i.e. 2 hours behind local time in summer.
+Imported (Excel) transactions already had correct local time.
 
 This script shifts created_at by +HOURS for transactions in a time window, so
 you can correct only the affected (UTC) period without touching the older,
