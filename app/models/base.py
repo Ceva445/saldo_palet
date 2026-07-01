@@ -9,7 +9,7 @@ Base = declarative_base()
 
 class CreatedAtMixin:
     created_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
         index=True,
@@ -18,7 +18,7 @@ class CreatedAtMixin:
 
 class UpdatedAtMixin:
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=func.now(),
         server_default=func.now(),
         onupdate=func.now(),
