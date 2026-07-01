@@ -82,3 +82,16 @@ async def delete_user(
     await service.delete_user(user_uuid)
     await session.commit()
     return {"success": True}
+
+from sqlalchemy import text
+@router.get("/debug-time")
+async def debug_time(session: AsyncSession = Depends(get_session)):
+    timezone = await session.execute(text("SHOW TIMEZONE"))
+    now = await session.execute(text("SELECT NOW()"))
+    local = await session.execute(text("SELECT CURRENT_TIMESTAMP"))
+
+    return {
+        "timezone": timezone.scalar(),
+        "now": str(now.scalar()),
+        "current_timestamp": str(local.scalar()),
+    }
